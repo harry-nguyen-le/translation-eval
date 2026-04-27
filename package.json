@@ -14,11 +14,15 @@
   "scripts": {
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
+    "i18n:icu-syntax-preservation": "bun run scripts/icu-syntax-preservation.ts",
     "i18n:mixed-script-detection": "bun run scripts/mixed-script-detection.ts",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@formatjs/icu-messageformat-parser": "^3.5.5"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
