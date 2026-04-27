@@ -1,0 +1,37 @@
+ICU syntax preservation
+File: master-translations.json
+Entries: 21185
+Checked translations: 40651
+Skipped translations: 1719
+Invalid entries: 1
+
+First 1 invalid entries:
+{
+  "id": "zPUYJOin2Pl7y-_0pIiI",
+  "field": "french",
+  "description": "Room count in tour breakdown info on the tour offer detail page",
+  "source": "{count, plural, one {# room} other {# rooms}}",
+  "target": "{count, plural, un {# chambre} other {# chambres}}",
+  "issues": [
+    {
+      "code": "invalid_plural_selector",
+      "side": "target",
+      "path": "$/0",
+      "argumentName": "count",
+      "selector": "un",
+      "allowedSelectors": "zero, one, two, few, many, other, or a canonical exact numeric selector like =0, =1, or =-1",
+      "location": {
+        "start": {
+          "offset": 19,
+          "line": 1,
+          "column": 20
+        },
+        "end": {
+          "offset": 30,
+          "line": 1,
+          "column": 31
+        }
+      }
+    }
+  ]
+}

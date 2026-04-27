@@ -125749,7 +125749,7 @@
   },
   "zPUYJOin2Pl7y-_0pIiI": {
     "english": "{count, plural, one {# room} other {# rooms}}",
-    "french": "{count, plural, one {# chambre} other {# chambres}}",
+    "french": "{count, plural, un {# chambre} other {# chambres}}",
     "german": "{count, plural, one {# Zimmer} other {# Zimmer}}",
     "description": "Room count in tour breakdown info on the tour offer detail page"
   },
