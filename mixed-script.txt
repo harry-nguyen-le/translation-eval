@@ -1,0 +1,655 @@
+Mixed script detection
+File: master-translations.json
+Entries: 21185
+Checked translations: 61836
+Skipped null translations: 1719
+Invalid entries: 13
+Unexpected script issues: 65
+Evaluation errors: 0
+
+First 13 invalid entries:
+{
+  "id": "-0OHtTdsT5ET7di7weqZ",
+  "field": "french",
+  "locale": "fr",
+  "value": "Si vous êtes victime d’un accident au volant d’une voiture de location, suivez ces étapes : 1. Assurez votre sécurité : veillez à votre sécurité et à celle des autres personnes impliquées. Si possible, mettez-vous en lieu sûr et contactez les services d’urgence si nécessaire. 2. Informez la société de location et la police : signalez immédiatement l’accident en utilisant leur numéro de contact d’urgence dédié. Ils vous indiqueront les prochaines étapes à suivre. 3. Documentez l’incident : prenez des photos du lieu de l’accident, recueillez les informations des personnes impliquées ou des témoins, et notez tous les détails pertinents. Cette documentation peut être պահանջée pour les demandes d’indemnisation auprès de l’assurance. Les informations que vous devrez probablement recueillir comprennent le numéro d’immatriculation et le numéro de permis de conduire des deux véhicules et conducteurs, l’adresse de l’autre conducteur ainsi que des photos de l’incident.",
+  "description": "FAQ answer about steps to take after a rental car accident",
+  "issueCount": 6,
+  "unexpectedScripts": [
+    "Armenian"
+  ],
+  "unexpectedChars": [
+    "ա",
+    "հ",
+    "ն",
+    "պ",
+    "ջ"
+  ],
+  "issues": [
+    {
+      "char": "պ",
+      "script": "Armenian",
+      "indexInSegment": 672,
+      "path": "$"
+    },
+    {
+      "char": "ա",
+      "script": "Armenian",
+      "indexInSegment": 673,
+      "path": "$"
+    },
+    {
+      "char": "հ",
+      "script": "Armenian",
+      "indexInSegment": 674,
+      "path": "$"
+    },
+    {
+      "char": "ա",
+      "script": "Armenian",
+      "indexInSegment": 675,
+      "path": "$"
+    },
+    {
+      "char": "ն",
+      "script": "Armenian",
+      "indexInSegment": 676,
+      "path": "$"
+    },
+    {
+      "char": "ջ",
+      "script": "Armenian",
+      "indexInSegment": 677,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "1oFLGMUjsInblbVHkvgl",
+  "field": "french",
+  "locale": "fr",
+  "value": "Obtenez {discountPercentage}% de réduction avec les prix सदस्य",
+  "description": "Discount label showing the percentage saving available with member pricing",
+  "issueCount": 5,
+  "unexpectedScripts": [
+    "Devanagari"
+  ],
+  "unexpectedChars": [
+    "द",
+    "य",
+    "स",
+    "्"
+  ],
+  "issues": [
+    {
+      "char": "स",
+      "script": "Devanagari",
+      "indexInSegment": 29,
+      "path": "$"
+    },
+    {
+      "char": "द",
+      "script": "Devanagari",
+      "indexInSegment": 30,
+      "path": "$"
+    },
+    {
+      "char": "स",
+      "script": "Devanagari",
+      "indexInSegment": 31,
+      "path": "$"
+    },
+    {
+      "char": "्",
+      "script": "Devanagari",
+      "indexInSegment": 32,
+      "path": "$"
+    },
+    {
+      "char": "य",
+      "script": "Devanagari",
+      "indexInSegment": 33,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "2U4zFTgvZmndC1IiHxIh",
+  "field": "french",
+  "locale": "fr",
+  "value": "Je ne voyage pas assez ხშირად",
+  "description": "Cancellation reason option: infrequent travel in a modal dialog",
+  "issueCount": 6,
+  "unexpectedScripts": [
+    "Georgian"
+  ],
+  "unexpectedChars": [
+    "ა",
+    "დ",
+    "ი",
+    "რ",
+    "შ",
+    "ხ"
+  ],
+  "issues": [
+    {
+      "char": "ხ",
+      "script": "Georgian",
+      "indexInSegment": 23,
+      "path": "$"
+    },
+    {
+      "char": "შ",
+      "script": "Georgian",
+      "indexInSegment": 24,
+      "path": "$"
+    },
+    {
+      "char": "ი",
+      "script": "Georgian",
+      "indexInSegment": 25,
+      "path": "$"
+    },
+    {
+      "char": "რ",
+      "script": "Georgian",
+      "indexInSegment": 26,
+      "path": "$"
+    },
+    {
+      "char": "ა",
+      "script": "Georgian",
+      "indexInSegment": 27,
+      "path": "$"
+    },
+    {
+      "char": "დ",
+      "script": "Georgian",
+      "indexInSegment": 28,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "7Zr2eoICwSlVtCPmu03W",
+  "field": "french",
+  "locale": "fr",
+  "value": "Votre aperçu gratuit est disponible jusqu’au {date} ou jusqu’à ce que vous effectuiez ձեր premier achat {programName}.",
+  "description": "Subheading explaining free preview availability and expiry on landing page",
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "Armenian"
+  ],
+  "unexpectedChars": [
+    "ե",
+    "ձ",
+    "ր"
+  ],
+  "issues": [
+    {
+      "char": "ձ",
+      "script": "Armenian",
+      "indexInSegment": 35,
+      "path": "$"
+    },
+    {
+      "char": "ե",
+      "script": "Armenian",
+      "indexInSegment": 36,
+      "path": "$"
+    },
+    {
+      "char": "ր",
+      "script": "Armenian",
+      "indexInSegment": 37,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "OW-dgq0THfBFyjpgPDG9",
+  "field": "french",
+  "locale": "fr",
+  "value": "Cette visite est garantie d’avoir lieu à la date prévue à partir de 2 personnes minimum. Il existe une faible संभावना qu’elle n’ait pas lieu si le nombre minimum de participants n’est pas atteint. Dans ce cas, nous vous proposerons de choisir une autre date de visite, une autre visite ou un remboursement intégral.",
+  "description": "Minimum passenger guarantee and cancellation option for tours",
+  "issueCount": 7,
+  "unexpectedScripts": [
+    "Devanagari"
+  ],
+  "unexpectedChars": [
+    "ं",
+    "न",
+    "भ",
+    "व",
+    "स",
+    "ा"
+  ],
+  "issues": [
+    {
+      "char": "स",
+      "script": "Devanagari",
+      "indexInSegment": 110,
+      "path": "$"
+    },
+    {
+      "char": "ं",
+      "script": "Devanagari",
+      "indexInSegment": 111,
+      "path": "$"
+    },
+    {
+      "char": "भ",
+      "script": "Devanagari",
+      "indexInSegment": 112,
+      "path": "$"
+    },
+    {
+      "char": "ा",
+      "script": "Devanagari",
+      "indexInSegment": 113,
+      "path": "$"
+    },
+    {
+      "char": "व",
+      "script": "Devanagari",
+      "indexInSegment": 114,
+      "path": "$"
+    },
+    {
+      "char": "न",
+      "script": "Devanagari",
+      "indexInSegment": 115,
+      "path": "$"
+    },
+    {
+      "char": "ा",
+      "script": "Devanagari",
+      "indexInSegment": 116,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "RogI6ZdPwPpNmeG9MNO5",
+  "field": "french",
+  "locale": "fr",
+  "value": "La proposition visait à faire revivre le nom précolonial de Phuket, mais elle a été bloquée au parlement après les اعتراضs des groupes touristiques. « Phuket » reste donc la marque mondiale.",
+  "description": "Fun fact detail shown while AI trip generation is in progress for Phuket (fact 8)",
+  "issueCount": 6,
+  "unexpectedScripts": [
+    "Arabic"
+  ],
+  "unexpectedChars": [
+    "ا",
+    "ت",
+    "ر",
+    "ض",
+    "ع"
+  ],
+  "issues": [
+    {
+      "char": "ا",
+      "script": "Arabic",
+      "indexInSegment": 115,
+      "path": "$"
+    },
+    {
+      "char": "ع",
+      "script": "Arabic",
+      "indexInSegment": 116,
+      "path": "$"
+    },
+    {
+      "char": "ت",
+      "script": "Arabic",
+      "indexInSegment": 117,
+      "path": "$"
+    },
+    {
+      "char": "ر",
+      "script": "Arabic",
+      "indexInSegment": 118,
+      "path": "$"
+    },
+    {
+      "char": "ا",
+      "script": "Arabic",
+      "indexInSegment": 119,
+      "path": "$"
+    },
+    {
+      "char": "ض",
+      "script": "Arabic",
+      "indexInSegment": 120,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "TiRL4NzE8yckjDK9J07r",
+  "field": "french",
+  "locale": "fr",
+  "value": "(données स्रोत pour formattedCartItems)",
+  "description": "Dev mode subtitle for item view source data in checkout summary",
+  "issueCount": 5,
+  "unexpectedScripts": [
+    "Devanagari"
+  ],
+  "unexpectedChars": [
+    "त",
+    "र",
+    "स",
+    "ो",
+    "्"
+  ],
+  "issues": [
+    {
+      "char": "स",
+      "script": "Devanagari",
+      "indexInSegment": 9,
+      "path": "$"
+    },
+    {
+      "char": "्",
+      "script": "Devanagari",
+      "indexInSegment": 10,
+      "path": "$"
+    },
+    {
+      "char": "र",
+      "script": "Devanagari",
+      "indexInSegment": 11,
+      "path": "$"
+    },
+    {
+      "char": "ो",
+      "script": "Devanagari",
+      "indexInSegment": 12,
+      "path": "$"
+    },
+    {
+      "char": "त",
+      "script": "Devanagari",
+      "indexInSegment": 13,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "XsIEsMOZVa3tRXEy9Z2B",
+  "field": "french",
+  "locale": "fr",
+  "value": "Phuket était un centre التجاري de la Route maritime de la soie",
+  "description": "Fun fact headline shown while AI trip generation is in progress for Phuket (fact 7)",
+  "issueCount": 7,
+  "unexpectedScripts": [
+    "Arabic"
+  ],
+  "unexpectedChars": [
+    "ا",
+    "ت",
+    "ج",
+    "ر",
+    "ل",
+    "ي"
+  ],
+  "issues": [
+    {
+      "char": "ا",
+      "script": "Arabic",
+      "indexInSegment": 23,
+      "path": "$"
+    },
+    {
+      "char": "ل",
+      "script": "Arabic",
+      "indexInSegment": 24,
+      "path": "$"
+    },
+    {
+      "char": "ت",
+      "script": "Arabic",
+      "indexInSegment": 25,
+      "path": "$"
+    },
+    {
+      "char": "ج",
+      "script": "Arabic",
+      "indexInSegment": 26,
+      "path": "$"
+    },
+    {
+      "char": "ا",
+      "script": "Arabic",
+      "indexInSegment": 27,
+      "path": "$"
+    },
+    {
+      "char": "ر",
+      "script": "Arabic",
+      "indexInSegment": 28,
+      "path": "$"
+    },
+    {
+      "char": "ي",
+      "script": "Arabic",
+      "indexInSegment": 29,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "gWqQmPiVImSmoWNS1fQG",
+  "field": "french",
+  "locale": "fr",
+  "value": "Jeton غير valide.",
+  "description": "Snackbar error when agent hub registration token is invalid",
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "Arabic"
+  ],
+  "unexpectedChars": [
+    "ر",
+    "غ",
+    "ي"
+  ],
+  "issues": [
+    {
+      "char": "غ",
+      "script": "Arabic",
+      "indexInSegment": 6,
+      "path": "$"
+    },
+    {
+      "char": "ي",
+      "script": "Arabic",
+      "indexInSegment": 7,
+      "path": "$"
+    },
+    {
+      "char": "ر",
+      "script": "Arabic",
+      "indexInSegment": 8,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "jpHZXv7WHm5a6bYfJ2PU",
+  "field": "french",
+  "locale": "fr",
+  "value": "Veuillez noter que cette sélection de dates impactera uniquement votre hébergement et ne modifiera pas les réservations de vols déjà effectuées. Pour modifier les dates de vos vols, veuillez nous contacter au numéro ci-dessous et चयनner l’option 3 pour les vols. Nous vous recommandons de nous contacter afin de modifier vos vols avant de modifier votre hébergement.",
+  "description": "Warning message explaining that changing hotel dates does not affect existing flight bookings",
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "Devanagari"
+  ],
+  "unexpectedChars": [
+    "च",
+    "न",
+    "य"
+  ],
+  "issues": [
+    {
+      "char": "च",
+      "script": "Devanagari",
+      "indexInSegment": 230,
+      "path": "$"
+    },
+    {
+      "char": "य",
+      "script": "Devanagari",
+      "indexInSegment": 231,
+      "path": "$"
+    },
+    {
+      "char": "न",
+      "script": "Devanagari",
+      "indexInSegment": 232,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "oGKl38m7iQiIQT1PHD6e",
+  "field": "french",
+  "locale": "fr",
+  "value": "<b>Vous avez déjà चयनné une chambre dans {hotelName}.</b> Choisir une nouvelle chambre la remplacera.",
+  "description": "Warning when user has already selected a room from another hotel",
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "Devanagari"
+  ],
+  "unexpectedChars": [
+    "च",
+    "न",
+    "य"
+  ],
+  "issues": [
+    {
+      "char": "च",
+      "script": "Devanagari",
+      "indexInSegment": 15,
+      "path": "$"
+    },
+    {
+      "char": "य",
+      "script": "Devanagari",
+      "indexInSegment": 16,
+      "path": "$"
+    },
+    {
+      "char": "न",
+      "script": "Devanagari",
+      "indexInSegment": 17,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "pfGFO1IMpVTjcuhGBmxb",
+  "field": "french",
+  "locale": "fr",
+  "value": "Ce n’est pas grave ! Nous comprenons qu’il faut du temps pour rassembler tout ce dont vous avez besoin. Sans ce document, votre voyage pourrait être प्रभावितé. Notre équipe Tours Concierge est là pour vous aider à déterminer les prochaines étapes.",
+  "description": "Modal body text reassuring user about missing travel document",
+  "issueCount": 8,
+  "unexpectedScripts": [
+    "Devanagari"
+  ],
+  "unexpectedChars": [
+    "त",
+    "प",
+    "भ",
+    "र",
+    "व",
+    "ा",
+    "ि",
+    "्"
+  ],
+  "issues": [
+    {
+      "char": "प",
+      "script": "Devanagari",
+      "indexInSegment": 149,
+      "path": "$"
+    },
+    {
+      "char": "्",
+      "script": "Devanagari",
+      "indexInSegment": 150,
+      "path": "$"
+    },
+    {
+      "char": "र",
+      "script": "Devanagari",
+      "indexInSegment": 151,
+      "path": "$"
+    },
+    {
+      "char": "भ",
+      "script": "Devanagari",
+      "indexInSegment": 152,
+      "path": "$"
+    },
+    {
+      "char": "ा",
+      "script": "Devanagari",
+      "indexInSegment": 153,
+      "path": "$"
+    },
+    {
+      "char": "व",
+      "script": "Devanagari",
+      "indexInSegment": 154,
+      "path": "$"
+    },
+    {
+      "char": "ि",
+      "script": "Devanagari",
+      "indexInSegment": 155,
+      "path": "$"
+    },
+    {
+      "char": "त",
+      "script": "Devanagari",
+      "indexInSegment": 156,
+      "path": "$"
+    }
+  ]
+}
+{
+  "id": "zoLv1mrIEmAPZjEuVNCR",
+  "field": "french",
+  "locale": "fr",
+  "value": "Vous pouvez annuler votre réservation sans frais dans les 48 heures suivant la soumission de votre réservation. Passé ce délai, le montant de la réservation vous sera automatiquement prélevé conformément au plan de paiement que vous avez चयनné. Veuillez consulter nos conditions générales ci-dessous pour connaître les conditions de remboursement.",
+  "description": "Body text explaining the reserve for zero cancellation policy",
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "Devanagari"
+  ],
+  "unexpectedChars": [
+    "च",
+    "न",
+    "य"
+  ],
+  "issues": [
+    {
+      "char": "च",
+      "script": "Devanagari",
+      "indexInSegment": 238,
+      "path": "$"
+    },
+    {
+      "char": "य",
+      "script": "Devanagari",
+      "indexInSegment": 239,
+      "path": "$"
+    },
+    {
+      "char": "न",
+      "script": "Devanagari",
+      "indexInSegment": 240,
+      "path": "$"
+    }
+  ]
+}

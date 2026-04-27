@@ -11,10 +11,7 @@ export type VisibleSegment = {
   end: number;
 };
 
-export type DetectedScript =
-  | (typeof SCRIPT_DETECTION_ORDER)[number][1]
-  | "Neutral"
-  | "Unknown";
+export type DetectedScript = (typeof SCRIPT_DETECTION_ORDER)[number][1] | "Neutral" | "Unknown";
 
 export type ScriptIssue = {
   char: string;
@@ -40,19 +37,18 @@ export type MixedScriptCheckResult = {
   issues: ScriptIssue[];
 };
 
-const SCRIPT_SUBTAG_EXPANSIONS: Readonly<Record<string, readonly string[]>> =
-  Object.freeze({
-    Hans: ["Hani"],
-    Hant: ["Hani"],
-    Jpan: ["Hani", "Hira", "Kana"],
-    Kore: ["Hang", "Hani"],
-    Hanb: ["Hani", "Bopo"],
-    Hrkt: ["Hira", "Kana"],
-    Latf: ["Latn"],
-    Latg: ["Latn"],
-    Cyrs: ["Cyrl"],
-    Aran: ["Arab"]
-  });
+const SCRIPT_SUBTAG_EXPANSIONS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  Hans: ["Hani"],
+  Hant: ["Hani"],
+  Jpan: ["Hani", "Hira", "Kana"],
+  Kore: ["Hang", "Hani"],
+  Hanb: ["Hani", "Bopo"],
+  Hrkt: ["Hira", "Kana"],
+  Latf: ["Latn"],
+  Latg: ["Latn"],
+  Cyrs: ["Cyrl"],
+  Aran: ["Arab"],
+});
 
 const SCRIPT_DETECTION_ORDER = [
   ["Latn", "Latin"],
@@ -83,14 +79,10 @@ const SCRIPT_DETECTION_ORDER = [
   ["Geor", "Georgian"],
   ["Ethi", "Ethiopic"],
   ["Thaa", "Thaana"],
-  ["Tibt", "Tibetan"]
+  ["Tibt", "Tibetan"],
 ] as const;
 
-const COMPLEX_ARGUMENT_TYPES = new Set<string>([
-  "plural",
-  "select",
-  "selectordinal"
-]);
+const COMPLEX_ARGUMENT_TYPES = new Set<string>(["plural", "select", "selectordinal"]);
 
 const scriptPatternCache = new Map<string, RegExp>();
 
@@ -119,7 +111,7 @@ export function extractVisibleSegments(message: string): VisibleSegment[] {
 export function checkIcuTranslationForMixedScripts(
   message: string,
   targetLocale: string,
-  options: MixedScriptCheckOptions = {}
+  options: MixedScriptCheckOptions = {},
 ): MixedScriptCheckResult {
   const expectedScripts = expectedUnicodeScriptsForLocale(targetLocale);
 
@@ -133,7 +125,7 @@ export function checkIcuTranslationForMixedScripts(
 
   const visibleSegments = extractVisibleSegments(message);
   const issues = visibleSegments.flatMap((segment) =>
-    checkSegment(segment, expectedScripts, options)
+    checkSegment(segment, expectedScripts, options),
   );
 
   return {
@@ -141,7 +133,7 @@ export function checkIcuTranslationForMixedScripts(
     expectedScripts: [...expectedScripts],
     visibleSegments,
     hasUnexpectedScript: issues.length > 0,
-    issues
+    issues,
   };
 }
 
@@ -170,7 +162,7 @@ export function detectedScriptForCharacter(char: string): DetectedScript {
 function checkSegment(
   segment: VisibleSegment,
   expectedScripts: ReadonlySet<string>,
-  options: MixedScriptCheckOptions
+  options: MixedScriptCheckOptions,
 ): ScriptIssue[] {
   const text = segment.text.normalize("NFC");
   const allowedRanges = buildAllowedRanges(text, options);
@@ -191,7 +183,7 @@ function checkSegment(
         indexInMessage: segment.start + index,
         segment: text,
         path: segment.path,
-        expectedScripts: [...expectedScripts]
+        expectedScripts: [...expectedScripts],
       });
     }
 
@@ -201,10 +193,7 @@ function checkSegment(
   return issues;
 }
 
-function matchesAnyExpectedScript(
-  char: string,
-  expectedScripts: ReadonlySet<string>
-): boolean {
+function matchesAnyExpectedScript(char: string, expectedScripts: ReadonlySet<string>): boolean {
   for (const script of expectedScripts) {
     if (charMatchesScript(char, script)) {
       return true;
@@ -229,10 +218,7 @@ function scriptPattern(script: string): RegExp {
   return pattern;
 }
 
-function buildAllowedRanges(
-  text: string,
-  options: MixedScriptCheckOptions
-): Range[] {
+function buildAllowedRanges(text: string, options: MixedScriptCheckOptions): Range[] {
   const ranges: Range[] = [];
 
   for (const term of options.allowedTerms ?? []) {
@@ -294,7 +280,7 @@ function walkMessage(
   start: number,
   end: number,
   path: string,
-  segments: VisibleSegment[]
+  segments: VisibleSegment[],
 ): void {
   let index = start;
   let literal = "";
@@ -343,7 +329,7 @@ function pushLiteralSegment(
   rawText: string,
   path: string,
   start: number,
-  end: number
+  end: number,
 ): void {
   const text = rawText.replace(RICH_TEXT_TAG_PATTERN, "");
 
@@ -355,7 +341,7 @@ function pushLiteralSegment(
     text,
     path,
     start,
-    end
+    end,
   });
 }
 
@@ -364,7 +350,7 @@ function walkArgument(
   openIndex: number,
   end: number,
   path: string,
-  segments: VisibleSegment[]
+  segments: VisibleSegment[],
 ): number {
   const closeIndex = findMatchingBrace(message, openIndex, end);
 
@@ -390,20 +376,10 @@ function walkArgument(
   }
 
   if (secondComma === -1) {
-    throw new SyntaxError(
-      `Missing ICU options for ${argumentType} argument at index ${openIndex}`
-    );
+    throw new SyntaxError(`Missing ICU options for ${argumentType} argument at index ${openIndex}`);
   }
 
-  walkOptions(
-    message,
-    secondComma + 1,
-    contentEnd,
-    argumentName,
-    argumentType,
-    path,
-    segments
-  );
+  walkOptions(message, secondComma + 1, contentEnd, argumentName, argumentType, path, segments);
 
   return closeIndex + 1;
 }
@@ -419,7 +395,7 @@ function walkOptions(
   argumentName: string,
   argumentType: ComplexArgumentType,
   path: string,
-  segments: VisibleSegment[]
+  segments: VisibleSegment[],
 ): void {
   let index = start;
   let sawOther = false;
@@ -463,7 +439,7 @@ function walkOptions(
       bodyOpen + 1,
       bodyClose,
       `${path}/{${argumentName}, ${argumentType}, ${selector}}`,
-      segments
+      segments,
     );
 
     index = bodyClose + 1;
@@ -471,7 +447,7 @@ function walkOptions(
 
   if (!sawOther) {
     throw new SyntaxError(
-      `ICU ${argumentType} argument "${argumentName}" is missing an "other" option`
+      `ICU ${argumentType} argument "${argumentName}" is missing an "other" option`,
     );
   }
 }
@@ -533,19 +509,19 @@ function findMatchingBrace(message: string, openIndex: number, end: number): num
 function readApostropheLiteral(
   message: string,
   index: number,
-  end: number
+  end: number,
 ): { text: string; nextIndex: number } {
   if (message[index + 1] === "'") {
     return {
       text: "'",
-      nextIndex: index + 2
+      nextIndex: index + 2,
     };
   }
 
   if (!isIcuSyntaxCharacter(message[index + 1])) {
     return {
       text: "'",
-      nextIndex: index + 1
+      nextIndex: index + 1,
     };
   }
 
@@ -562,7 +538,7 @@ function readApostropheLiteral(
 
       return {
         text,
-        nextIndex: cursor + 1
+        nextIndex: cursor + 1,
       };
     }
 
@@ -572,15 +548,11 @@ function readApostropheLiteral(
 
   return {
     text,
-    nextIndex: cursor
+    nextIndex: cursor,
   };
 }
 
-function skipApostropheLiteral(
-  message: string,
-  index: number,
-  end: number
-): number {
+function skipApostropheLiteral(message: string, index: number, end: number): number {
   return readApostropheLiteral(message, index, end).nextIndex;
 }
 

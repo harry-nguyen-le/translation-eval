@@ -24,10 +24,7 @@ Cyrillic `а`.
 ```js
 import { checkIcuTranslationForMixedScripts } from "translation-eval";
 
-const result = checkIcuTranslationForMixedScripts(
-  "{userName} reset your Pаypal password",
-  "en"
-);
+const result = checkIcuTranslationForMixedScripts("{userName} reset your Pаypal password", "en");
 
 console.log(result.hasUnexpectedScript);
 console.log(result.issues);
@@ -36,13 +33,9 @@ console.log(result.issues);
 With exact exceptions:
 
 ```js
-const result = checkIcuTranslationForMixedScripts(
-  "PayPalからメールを送信しました",
-  "ja",
-  {
-    allowedTerms: ["PayPal"]
-  }
-);
+const result = checkIcuTranslationForMixedScripts("PayPalからメールを送信しました", "ja", {
+  allowedTerms: ["PayPal"],
+});
 ```
 
 Run tests:
@@ -55,4 +48,10 @@ Run typechecking:
 
 ```sh
 bun run typecheck
+```
+
+Run the mixed-script detector against `master-translations.json`:
+
+```sh
+bun i18n:mixed-script-detection
 ```
