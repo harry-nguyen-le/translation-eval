@@ -15,6 +15,7 @@
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "i18n:icu-syntax-preservation": "bun run scripts/icu-syntax-preservation.ts",
+    "i18n:markdown-preservation": "bun run scripts/markdown-preservation.ts",
     "i18n:mixed-script-detection": "bun run scripts/mixed-script-detection.ts",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
@@ -22,7 +23,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@formatjs/icu-messageformat-parser": "^3.5.5"
+    "@formatjs/icu-messageformat-parser": "^3.5.5",
+    "mdast-util-from-markdown": "^2.0.3"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
