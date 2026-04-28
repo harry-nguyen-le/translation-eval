@@ -1,41 +1,19 @@
 # translation-eval
 
-ICU-aware mixed-script detection for translation QA.
+ICU-aware translation QA utilities.
 
-The detector parses ICU MessageFormat enough to scan only user-visible literal
-text. Placeholders, plural/select syntax, selector keys, number/date formats,
-and rich-text tag names are ignored.
+This package contains focused validation checks for translated UI strings:
 
-Expected scripts are derived from the target locale:
-
-1. Use an explicit BCP-47 script subtag when present, such as `sr-Latn`.
-2. Otherwise use `Intl.Locale(locale).maximize().script`.
-3. Expand composite script subtags like `Jpan`, `Kore`, `Hans`, and `Hant`.
-4. Compare visible literal characters with Unicode `Script_Extensions`.
-5. Treat `Common` and `Inherited` characters as neutral.
-
-Exact allowed terms can be supplied for product names, brands, glossary terms,
-or other project-specific spans. Allowed terms are exact span matches, so an
-allowlist entry such as `PayPal` will not hide a spoofed `PаyPal` containing a
-Cyrillic `а`.
+- [Mixed script detection](src/mixed-script-detection/README.md) detects unexpected Unicode scripts in user-visible ICU text.
+- [ICU syntax preservation](src/icu-syntax-preservation/README.md) checks that translated ICU messages preserve source syntax and selector contracts.
+- [Markdown preservation](src/markdown-preservation/README.md) checks that translated Markdown preserves protected structure and destinations.
 
 ## Usage
 
-```js
-import { checkIcuTranslationForMixedScripts } from "translation-eval";
+Install dependencies:
 
-const result = checkIcuTranslationForMixedScripts("{userName} reset your Pаypal password", "en");
-
-console.log(result.hasUnexpectedScript);
-console.log(result.issues);
-```
-
-With exact exceptions:
-
-```js
-const result = checkIcuTranslationForMixedScripts("PayPalからメールを送信しました", "ja", {
-  allowedTerms: ["PayPal"],
-});
+```sh
+bun install
 ```
 
 Run tests:
@@ -66,63 +44,4 @@ Run the Markdown preservation proof of concept against `dummy-markdown.json`:
 
 ```sh
 bun i18n:markdown-preservation
-```
-
-## ICU Syntax Preservation
-
-The ICU syntax preservation proof of concept uses `@formatjs/icu-messageformat-parser`
-to parse source and target messages, then adds stricter translation QA checks:
-
-- `plural` and `selectordinal` selectors must be ICU plural selectors:
-  `zero`, `one`, `two`, `few`, `many`, `other`, or canonical exact selectors like `=0`.
-- `select` selector keys must match the source message exactly.
-- FormatJS structural equality is still used for argument names and argument types.
-
-```ts
-import { validateIcuSyntaxPreservation } from "translation-eval";
-
-const result = validateIcuSyntaxPreservation(
-  "{count, plural, one {# file} other {# files}}",
-  "{count, plural, un {# fichier} other {# fichiers}}",
-);
-
-console.log(result.isValid); // false
-console.log(result.issues);
-```
-
-## Markdown Preservation
-
-The Markdown preservation proof of concept parses Markdown before and after translation.
-It accepts runtime Markdown strings and JSON string literals, so raw escaped values such
-as `"\n#### Rooms  \n..."` are decoded before Markdown parsing while the raw escape
-inventory is still recorded.
-
-`master-translations.json` is the static frontend string set and is not expected to
-contain Markdown. Use `dummy-markdown.json` for Markdown preservation evaluation.
-
-For embedded Markdown links, the visible label is translatable but the destination is
-protected. For example, `[the docs](/docs)` may become `[la documentation](/docs)`,
-but not `[la documentation](/aide)`.
-
-```ts
-import { parseMarkdownForPreservation, validateMarkdownPreservation } from "translation-eval";
-
-const parsed = parseMarkdownForPreservation(String.raw`"\n#### Rooms  \nMake yourself at home."`);
-
-console.log(parsed.contract.blocks);
-
-const result = validateMarkdownPreservation(
-  "Read [the docs](/docs) before running `npm install`.",
-  "Avant d’exécuter `npm install`, lisez [la documentation](/docs).",
-);
-
-console.log(result.isValid); // true
-
-const invalidLink = validateMarkdownPreservation(
-  "Read [the cancellation policy](/policies/cancellation) before booking.",
-  "Avant de réserver, lisez [la politique d’annulation](/politiques/annulation).",
-);
-
-console.log(invalidLink.isValid); // false
-console.log(invalidLink.issues);
 ```
