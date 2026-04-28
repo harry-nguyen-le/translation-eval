@@ -1,8 +1,8 @@
 # translation-eval
 
-ICU-aware translation QA utilities.
+ICU-aware translation QA utilities. The ultimate goal is for these checks to be integrated into `svc-translation`
 
-This package contains focused validation checks for translated UI strings:
+This package contains deterministic validation checks for translated UI strings:
 
 - [Mixed script detection](src/mixed-script-detection/README.md) detects unexpected Unicode scripts in user-visible ICU text.
 - [ICU syntax preservation](src/icu-syntax-preservation/README.md) checks that translated ICU messages preserve source syntax and selector contracts.
