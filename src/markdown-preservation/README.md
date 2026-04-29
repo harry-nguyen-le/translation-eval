@@ -2,7 +2,7 @@
 
 Checks that translated Markdown preserves protected structure and destinations.
 
-The check parses Markdown before and after translation. It accepts runtime Markdown strings and JSON string literals, so raw escaped values such as `"\n#### Rooms  \n..."` are decoded before Markdown parsing while the raw escape inventory is still recorded.
+The check parses Markdown after translation and assumes the input is a translated raw Markdown string. It accepts runtime Markdown strings and JSON string literals, so raw escaped values such as `"\n#### Rooms  \n..."` are decoded before Markdown parsing while the raw escape inventory is still recorded.
 
 `master-translations.json` is the static frontend string set and is not expected to contain Markdown. Use `dummy-markdown.json` for Markdown preservation evaluation.
 

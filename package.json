@@ -17,6 +17,7 @@
     "i18n:icu-syntax-preservation": "bun run scripts/icu-syntax-preservation.ts",
     "i18n:markdown-preservation": "bun run scripts/markdown-preservation.ts",
     "i18n:mixed-script-detection": "bun run scripts/mixed-script-detection.ts",
+    "i18n:url-preservation": "bun run scripts/url-preservation.ts",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
     "test": "vitest run",

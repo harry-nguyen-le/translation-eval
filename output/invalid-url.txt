@@ -1,0 +1,6 @@
+URL preservation
+File: master-translations.json
+Entries: 21185
+Checked translations: 40651
+Skipped translations: 1719
+Invalid entries: 0
