@@ -5,6 +5,7 @@ ICU-aware translation QA utilities. The ultimate goal is for these checks to be 
 This package contains deterministic validation checks for translated UI strings:
 
 - [Mixed script detection](src/mixed-script-detection/README.md) detects unexpected Unicode scripts in user-visible ICU text.
+- [Escape character preservation](src/escape-character-preservation/README.md) checks that translated JSON string literals preserve raw escape sequences.
 - [ICU syntax preservation](src/icu-syntax-preservation/README.md) checks that translated ICU messages preserve source syntax and selector contracts.
 - [Markdown preservation](src/markdown-preservation/README.md) checks that translated Markdown preserves protected structure and destinations.
 - [URL preservation](src/url-preservation/README.md) checks that translated content preserves source URLs exactly.
@@ -39,6 +40,12 @@ Run the ICU syntax preservation proof of concept against `master-translations.js
 
 ```sh
 bun i18n:icu-syntax-preservation
+```
+
+Run the escape character preservation proof of concept against `master-translations.json`:
+
+```sh
+bun i18n:escape-character-preservation
 ```
 
 Run the Markdown preservation proof of concept against `dummy-markdown.json`:

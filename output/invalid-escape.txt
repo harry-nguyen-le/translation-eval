@@ -1,0 +1,26 @@
+Escape character preservation
+File: master-translations.json
+Entries: 21185
+Checked translations: 40651
+Skipped translations: 1719
+Invalid entries: 1
+
+First 1 invalid entries:
+{
+  "id": "NVoQknd6khYxv_OL04nz",
+  "field": "french",
+  "description": "Google review count displayed on login modal in the reviews section",
+  "source": "(3K reviews)",
+  "target": "(3\u0000a0000 avis)",
+  "sourceRaw": "\"(3K reviews)\"",
+  "targetRaw": "\"(3\\u0000a0000 avis)\"",
+  "issues": [
+    {
+      "code": "escape_sequences_changed",
+      "sourceEscapes": [],
+      "targetEscapes": [
+        "\\u0000"
+      ]
+    }
+  ]
+}

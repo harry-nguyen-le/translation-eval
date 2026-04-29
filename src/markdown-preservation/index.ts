@@ -1,24 +1,16 @@
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Blockquote, Content, List, ListItem, PhrasingContent, Root } from "mdast";
+import {
+  collectJsonStringEscapes,
+  compareEscapeCharacterSequences,
+  type EscapeCharacterKind,
+  type EscapeCharacterSequence,
+} from "../escape-character-preservation/index";
 
 export type MarkdownInputFormat = "auto" | "json-string" | "runtime";
 
-export type MarkdownEscapeKind =
-  | "backspace"
-  | "backslash"
-  | "carriage-return"
-  | "form-feed"
-  | "newline"
-  | "quote"
-  | "slash"
-  | "tab"
-  | "unicode";
-
-export type MarkdownEscapeSequence = {
-  raw: string;
-  kind: MarkdownEscapeKind;
-  index: number;
-};
+export type MarkdownEscapeKind = EscapeCharacterKind;
+export type MarkdownEscapeSequence = EscapeCharacterSequence;
 
 export type MarkdownProtectedNode =
   | {
@@ -237,46 +229,6 @@ function normalizeMarkdownInput(
 function detectMarkdownInputFormat(input: string): Exclude<MarkdownInputFormat, "auto"> {
   const trimmed = input.trim();
   return trimmed.startsWith('"') && trimmed.endsWith('"') ? "json-string" : "runtime";
-}
-
-function collectJsonStringEscapes(input: string): MarkdownEscapeSequence[] {
-  const escapePattern = /\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4})/g;
-  const sequences: MarkdownEscapeSequence[] = [];
-
-  for (const match of input.matchAll(escapePattern)) {
-    sequences.push({
-      raw: match[0],
-      kind: classifyJsonEscape(match[0]),
-      index: match.index,
-    });
-  }
-
-  return sequences;
-}
-
-function classifyJsonEscape(raw: string): MarkdownEscapeKind {
-  switch (raw[1]) {
-    case '"':
-      return "quote";
-    case "\\":
-      return "backslash";
-    case "/":
-      return "slash";
-    case "b":
-      return "backspace";
-    case "f":
-      return "form-feed";
-    case "n":
-      return "newline";
-    case "r":
-      return "carriage-return";
-    case "t":
-      return "tab";
-    case "u":
-      return "unicode";
-    default:
-      throw new Error(`Unsupported JSON escape sequence: ${raw}`);
-  }
 }
 
 function extractMarkdownPreservationContract(
@@ -547,19 +499,7 @@ function compareMarkdownContracts(
     });
   }
 
-  const sourceEscapes = source.escapeSequences.map((escape) => escape.raw);
-  const targetEscapes = target.escapeSequences.map((escape) => escape.raw);
-
-  if (
-    (sourceEscapes.length > 0 || targetEscapes.length > 0) &&
-    !sameMultiset(sourceEscapes, targetEscapes)
-  ) {
-    issues.push({
-      code: "escape_sequences_changed",
-      sourceEscapes: sortStrings(sourceEscapes),
-      targetEscapes: sortStrings(targetEscapes),
-    });
-  }
+  issues.push(...compareEscapeCharacterSequences(source.escapeSequences, target.escapeSequences));
 
   for (let index = 0; index < Math.min(source.blocks.length, target.blocks.length); index += 1) {
     const sourceBlock = source.blocks[index];
