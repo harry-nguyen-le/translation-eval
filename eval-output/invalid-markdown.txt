@@ -1,0 +1,5 @@
+Markdown validation
+File: translation-data/extracted-translations.json
+Entries: 59095
+Checked translations: 59095
+Invalid entries: 0

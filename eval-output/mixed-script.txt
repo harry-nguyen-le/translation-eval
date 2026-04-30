@@ -1,5 +1,5 @@
 Mixed script detection
-File: master-translations.json
+File: translation-data/cp-static-translations.json
 Entries: 21185
 Checked translations: 61836
 Skipped null translations: 1719
