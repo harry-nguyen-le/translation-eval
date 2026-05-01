@@ -49,7 +49,7 @@ const TRANSLATION_LOCALES = {
   german: "de",
 } as const;
 
-const DEFAULT_FILE = "master-translations.json";
+const DEFAULT_FILE = "translation-data/cp-static-translations.json";
 const DEFAULT_MAX_REPORTS = 50;
 
 const args = parseArgs(process.argv.slice(2));

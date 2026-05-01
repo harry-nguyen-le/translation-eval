@@ -1,8 +1,17 @@
+import {
+  parse,
+  TYPE,
+  type Location,
+  type MessageFormatElement,
+  type PluralElement,
+  type SelectElement,
+} from "@formatjs/icu-messageformat-parser";
+
 const NEUTRAL_SCRIPT_PATTERN = /^[\p{Script=Common}\p{Script=Inherited}]$/u;
-const RICH_TEXT_TAG_PATTERN = /<\/?[A-Za-z][A-Za-z0-9_.-]*\s*\/?>/g;
+const LATIN_SCRIPT_PATTERN = /^\p{Script_Extensions=Latn}$/u;
+const EXPECTED_SCRIPTS = ["Latn"];
 
 type Range = [start: number, end: number];
-type ComplexArgumentType = "plural" | "select" | "selectordinal";
 
 export type VisibleSegment = {
   text: string;
@@ -11,7 +20,7 @@ export type VisibleSegment = {
   end: number;
 };
 
-export type DetectedScript = (typeof SCRIPT_DETECTION_ORDER)[number][1] | "Neutral" | "Unknown";
+export type DetectedScript = "Latin" | "Neutral" | "NonLatin";
 
 export type ScriptIssue = {
   char: string;
@@ -24,7 +33,6 @@ export type ScriptIssue = {
 };
 
 export type MixedScriptCheckOptions = {
-  additionalAllowedScripts?: Iterable<string>;
   allowedPatterns?: Iterable<RegExp>;
   allowedTerms?: Iterable<string>;
 };
@@ -37,65 +45,8 @@ export type MixedScriptCheckResult = {
   issues: ScriptIssue[];
 };
 
-const SCRIPT_SUBTAG_EXPANSIONS: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  Hans: ["Hani"],
-  Hant: ["Hani"],
-  Jpan: ["Hani", "Hira", "Kana"],
-  Kore: ["Hang", "Hani"],
-  Hanb: ["Hani", "Bopo"],
-  Hrkt: ["Hira", "Kana"],
-  Latf: ["Latn"],
-  Latg: ["Latn"],
-  Cyrs: ["Cyrl"],
-  Aran: ["Arab"],
-});
-
-const SCRIPT_DETECTION_ORDER = [
-  ["Latn", "Latin"],
-  ["Cyrl", "Cyrillic"],
-  ["Grek", "Greek"],
-  ["Arab", "Arabic"],
-  ["Hebr", "Hebrew"],
-  ["Deva", "Devanagari"],
-  ["Beng", "Bengali"],
-  ["Guru", "Gurmukhi"],
-  ["Gujr", "Gujarati"],
-  ["Orya", "Oriya"],
-  ["Taml", "Tamil"],
-  ["Telu", "Telugu"],
-  ["Knda", "Kannada"],
-  ["Mlym", "Malayalam"],
-  ["Sinh", "Sinhala"],
-  ["Hani", "Han"],
-  ["Hira", "Hiragana"],
-  ["Kana", "Katakana"],
-  ["Hang", "Hangul"],
-  ["Bopo", "Bopomofo"],
-  ["Thai", "Thai"],
-  ["Laoo", "Lao"],
-  ["Khmr", "Khmer"],
-  ["Mymr", "Myanmar"],
-  ["Armn", "Armenian"],
-  ["Geor", "Georgian"],
-  ["Ethi", "Ethiopic"],
-  ["Thaa", "Thaana"],
-  ["Tibt", "Tibetan"],
-] as const;
-
-const COMPLEX_ARGUMENT_TYPES = new Set<string>(["plural", "select", "selectordinal"]);
-
-const scriptPatternCache = new Map<string, RegExp>();
-
-export function expectedUnicodeScriptsForLocale(locale: string): Set<string> {
-  const parsedLocale = new Intl.Locale(locale);
-  const script = parsedLocale.script ?? parsedLocale.maximize().script;
-
-  if (!script) {
-    return new Set();
-  }
-
-  const expandedScripts = SCRIPT_SUBTAG_EXPANSIONS[script] ?? [script];
-  return new Set(expandedScripts);
+export function expectedUnicodeScriptsForLocale(_locale: string): Set<string> {
+  return new Set(["Latn"]);
 }
 
 export function extractVisibleSegments(message: string): VisibleSegment[] {
@@ -104,7 +55,11 @@ export function extractVisibleSegments(message: string): VisibleSegment[] {
   }
 
   const segments: VisibleSegment[] = [];
-  walkMessage(message, 0, message.length, "$", segments);
+  collectVisibleSegments(
+    parse(message, { captureLocation: true, requiresOtherClause: true }),
+    "$",
+    segments,
+  );
   return segments;
 }
 
@@ -113,24 +68,12 @@ export function checkIcuTranslationForMixedScripts(
   targetLocale: string,
   options: MixedScriptCheckOptions = {},
 ): MixedScriptCheckResult {
-  const expectedScripts = expectedUnicodeScriptsForLocale(targetLocale);
-
-  for (const script of options.additionalAllowedScripts ?? []) {
-    expectedScripts.add(script);
-  }
-
-  if (expectedScripts.size === 0) {
-    throw new Error(`No expected scripts could be derived for locale: ${targetLocale}`);
-  }
-
   const visibleSegments = extractVisibleSegments(message);
-  const issues = visibleSegments.flatMap((segment) =>
-    checkSegment(segment, expectedScripts, options),
-  );
+  const issues = visibleSegments.flatMap((segment) => checkSegment(segment, options));
 
   return {
     targetLocale,
-    expectedScripts: [...expectedScripts],
+    expectedScripts: EXPECTED_SCRIPTS,
     visibleSegments,
     hasUnexpectedScript: issues.length > 0,
     issues,
@@ -142,7 +85,7 @@ export function isNeutralCharacter(char: string): boolean {
 }
 
 export function charMatchesScript(char: string, script: string): boolean {
-  return scriptPattern(script).test(char);
+  return (script === "Latn" || script === "Latin") && LATIN_SCRIPT_PATTERN.test(char);
 }
 
 export function detectedScriptForCharacter(char: string): DetectedScript {
@@ -150,20 +93,14 @@ export function detectedScriptForCharacter(char: string): DetectedScript {
     return "Neutral";
   }
 
-  for (const [script, name] of SCRIPT_DETECTION_ORDER) {
-    if (charMatchesScript(char, script)) {
-      return name;
-    }
+  if (charMatchesScript(char, "Latn")) {
+    return "Latin";
   }
 
-  return "Unknown";
+  return "NonLatin";
 }
 
-function checkSegment(
-  segment: VisibleSegment,
-  expectedScripts: ReadonlySet<string>,
-  options: MixedScriptCheckOptions,
-): ScriptIssue[] {
+function checkSegment(segment: VisibleSegment, options: MixedScriptCheckOptions): ScriptIssue[] {
   const text = segment.text.normalize("NFC");
   const allowedRanges = buildAllowedRanges(text, options);
   const issues: ScriptIssue[] = [];
@@ -174,7 +111,7 @@ function checkSegment(
     if (
       !isIndexAllowed(index, allowedRanges) &&
       !isNeutralCharacter(char) &&
-      !matchesAnyExpectedScript(char, expectedScripts)
+      !charMatchesScript(char, "Latn")
     ) {
       issues.push({
         char,
@@ -183,7 +120,7 @@ function checkSegment(
         indexInMessage: segment.start + index,
         segment: text,
         path: segment.path,
-        expectedScripts: [...expectedScripts],
+        expectedScripts: EXPECTED_SCRIPTS,
       });
     }
 
@@ -193,46 +130,15 @@ function checkSegment(
   return issues;
 }
 
-function matchesAnyExpectedScript(char: string, expectedScripts: ReadonlySet<string>): boolean {
-  for (const script of expectedScripts) {
-    if (charMatchesScript(char, script)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function scriptPattern(script: string): RegExp {
-  if (!/^[A-Za-z_]+$/.test(script)) {
-    throw new Error(`Invalid Unicode script alias: ${script}`);
-  }
-
-  let pattern = scriptPatternCache.get(script);
-
-  if (!pattern) {
-    pattern = new RegExp(`^\\p{Script_Extensions=${script}}$`, "u");
-    scriptPatternCache.set(script, pattern);
-  }
-
-  return pattern;
-}
-
 function buildAllowedRanges(text: string, options: MixedScriptCheckOptions): Range[] {
   const ranges: Range[] = [];
 
   for (const term of options.allowedTerms ?? []) {
     const normalizedTerm = term.normalize("NFC");
-
-    if (normalizedTerm.length === 0) {
-      continue;
-    }
-
-    let index = text.indexOf(normalizedTerm);
-
-    while (index !== -1) {
-      ranges.push([index, index + normalizedTerm.length]);
-      index = text.indexOf(normalizedTerm, index + normalizedTerm.length);
+    if (normalizedTerm) {
+      collectMatches(text, normalizedTerm, (index) =>
+        ranges.push([index, index + normalizedTerm.length]),
+      );
     }
   }
 
@@ -251,6 +157,16 @@ function buildAllowedRanges(text: string, options: MixedScriptCheckOptions): Ran
   }
 
   return mergeRanges(ranges);
+}
+
+function collectMatches(text: string, term: string, onMatch: (index: number) => void): void {
+  for (
+    let index = text.indexOf(term);
+    index !== -1;
+    index = text.indexOf(term, index + term.length)
+  ) {
+    onMatch(index);
+  }
 }
 
 function mergeRanges(ranges: Range[]): Range[] {
@@ -275,317 +191,73 @@ function isIndexAllowed(index: number, ranges: readonly Range[]): boolean {
   return ranges.some(([start, end]) => index >= start && index < end);
 }
 
-function walkMessage(
-  message: string,
-  start: number,
-  end: number,
+function collectVisibleSegments(
+  ast: readonly MessageFormatElement[],
   path: string,
   segments: VisibleSegment[],
 ): void {
-  let index = start;
-  let literal = "";
-  let literalStart = start;
-
-  const appendLiteral = (text: string, position: number): void => {
-    if (literal.length === 0) {
-      literalStart = position;
+  for (const element of ast) {
+    if (element.type === TYPE.literal) {
+      pushSegment(segments, element.value, path, element.location);
+    } else if (element.type === TYPE.pound) {
+      pushSegment(segments, "#", path, element.location);
+    } else if (element.type === TYPE.tag) {
+      pushSegment(segments, visibleText(element.children), path, element.location);
+    } else if (element.type === TYPE.plural || element.type === TYPE.select) {
+      for (const [selector, option] of Object.entries(element.options)) {
+        collectVisibleSegments(
+          option.value,
+          `${path}/{${element.value}, ${optionType(element)}, ${selector}}`,
+          segments,
+        );
+      }
     }
-
-    literal += text;
-  };
-
-  const flushLiteral = (position: number): void => {
-    pushLiteralSegment(segments, literal, path, literalStart, position);
-    literal = "";
-    literalStart = position;
-  };
-
-  while (index < end) {
-    const char = message[index];
-
-    if (char === "'") {
-      const quoted = readApostropheLiteral(message, index, end);
-      appendLiteral(quoted.text, index);
-      index = quoted.nextIndex;
-      continue;
-    }
-
-    if (char === "{") {
-      flushLiteral(index);
-      index = walkArgument(message, index, end, path, segments);
-      literalStart = index;
-      continue;
-    }
-
-    appendLiteral(char, index);
-    index += 1;
   }
-
-  flushLiteral(end);
 }
 
-function pushLiteralSegment(
-  segments: VisibleSegment[],
-  rawText: string,
-  path: string,
-  start: number,
-  end: number,
-): void {
-  const text = rawText.replace(RICH_TEXT_TAG_PATTERN, "");
+function optionType(element: PluralElement | SelectElement): "plural" | "select" | "selectordinal" {
+  if (element.type === TYPE.select) {
+    return "select";
+  }
 
-  if (text.trim().length === 0) {
+  return element.pluralType === "ordinal" ? "selectordinal" : "plural";
+}
+
+function visibleText(ast: readonly MessageFormatElement[]): string {
+  return ast
+    .map((element) => {
+      if (element.type === TYPE.literal) {
+        return element.value;
+      }
+      if (element.type === TYPE.pound) {
+        return "#";
+      }
+      return element.type === TYPE.tag ? visibleText(element.children) : "";
+    })
+    .join("");
+}
+
+function pushSegment(
+  segments: VisibleSegment[],
+  text: string,
+  path: string,
+  location: Location | undefined,
+): void {
+  if (text.trim().length === 0 || !location) {
+    return;
+  }
+
+  const previous = segments.at(-1);
+  if (previous?.path === path && previous.end === location.start.offset) {
+    previous.text += text;
+    previous.end = location.end.offset;
     return;
   }
 
   segments.push({
     text,
     path,
-    start,
-    end,
+    start: location.start.offset,
+    end: location.end.offset,
   });
-}
-
-function walkArgument(
-  message: string,
-  openIndex: number,
-  end: number,
-  path: string,
-  segments: VisibleSegment[],
-): number {
-  const closeIndex = findMatchingBrace(message, openIndex, end);
-
-  if (closeIndex === -1) {
-    throw new SyntaxError(`Unmatched ICU argument brace at index ${openIndex}`);
-  }
-
-  const contentStart = openIndex + 1;
-  const contentEnd = closeIndex;
-  const firstComma = findTopLevelComma(message, contentStart, contentEnd);
-
-  if (firstComma === -1) {
-    return closeIndex + 1;
-  }
-
-  const argumentName = message.slice(contentStart, firstComma).trim();
-  const secondComma = findTopLevelComma(message, firstComma + 1, contentEnd);
-  const typeEnd = secondComma === -1 ? contentEnd : secondComma;
-  const argumentType = message.slice(firstComma + 1, typeEnd).trim();
-
-  if (!isComplexArgumentType(argumentType)) {
-    return closeIndex + 1;
-  }
-
-  if (secondComma === -1) {
-    throw new SyntaxError(`Missing ICU options for ${argumentType} argument at index ${openIndex}`);
-  }
-
-  walkOptions(message, secondComma + 1, contentEnd, argumentName, argumentType, path, segments);
-
-  return closeIndex + 1;
-}
-
-function isComplexArgumentType(type: string): type is ComplexArgumentType {
-  return COMPLEX_ARGUMENT_TYPES.has(type);
-}
-
-function walkOptions(
-  message: string,
-  start: number,
-  end: number,
-  argumentName: string,
-  argumentType: ComplexArgumentType,
-  path: string,
-  segments: VisibleSegment[],
-): void {
-  let index = start;
-  let sawOther = false;
-
-  while (index < end) {
-    index = skipWhitespace(message, index, end);
-
-    if (index >= end) {
-      break;
-    }
-
-    if (argumentType !== "select" && message.startsWith("offset:", index)) {
-      index = skipToken(message, index, end);
-      continue;
-    }
-
-    const selectorStart = index;
-    index = readSelector(message, index, end);
-    const selector = message.slice(selectorStart, index).trim();
-
-    if (!selector) {
-      throw new SyntaxError(`Missing ICU selector at index ${selectorStart}`);
-    }
-
-    sawOther ||= selector === "other";
-    index = skipWhitespace(message, index, end);
-
-    if (message[index] !== "{") {
-      throw new SyntaxError(`Missing ICU option body for selector "${selector}"`);
-    }
-
-    const bodyOpen = index;
-    const bodyClose = findMatchingBrace(message, bodyOpen, end);
-
-    if (bodyClose === -1) {
-      throw new SyntaxError(`Unmatched ICU option body for selector "${selector}"`);
-    }
-
-    walkMessage(
-      message,
-      bodyOpen + 1,
-      bodyClose,
-      `${path}/{${argumentName}, ${argumentType}, ${selector}}`,
-      segments,
-    );
-
-    index = bodyClose + 1;
-  }
-
-  if (!sawOther) {
-    throw new SyntaxError(
-      `ICU ${argumentType} argument "${argumentName}" is missing an "other" option`,
-    );
-  }
-}
-
-function findTopLevelComma(message: string, start: number, end: number): number {
-  let depth = 0;
-  let index = start;
-
-  while (index < end) {
-    const char = message[index];
-
-    if (char === "'") {
-      index = skipApostropheLiteral(message, index, end);
-      continue;
-    }
-
-    if (char === "{") {
-      depth += 1;
-    } else if (char === "}") {
-      depth -= 1;
-    } else if (char === "," && depth === 0) {
-      return index;
-    }
-
-    index += 1;
-  }
-
-  return -1;
-}
-
-function findMatchingBrace(message: string, openIndex: number, end: number): number {
-  let depth = 0;
-  let index = openIndex;
-
-  while (index < end) {
-    const char = message[index];
-
-    if (char === "'") {
-      index = skipApostropheLiteral(message, index, end);
-      continue;
-    }
-
-    if (char === "{") {
-      depth += 1;
-    } else if (char === "}") {
-      depth -= 1;
-
-      if (depth === 0) {
-        return index;
-      }
-    }
-
-    index += 1;
-  }
-
-  return -1;
-}
-
-function readApostropheLiteral(
-  message: string,
-  index: number,
-  end: number,
-): { text: string; nextIndex: number } {
-  if (message[index + 1] === "'") {
-    return {
-      text: "'",
-      nextIndex: index + 2,
-    };
-  }
-
-  if (!isIcuSyntaxCharacter(message[index + 1])) {
-    return {
-      text: "'",
-      nextIndex: index + 1,
-    };
-  }
-
-  let cursor = index + 1;
-  let text = "";
-
-  while (cursor < end) {
-    if (message[cursor] === "'") {
-      if (message[cursor + 1] === "'") {
-        text += "'";
-        cursor += 2;
-        continue;
-      }
-
-      return {
-        text,
-        nextIndex: cursor + 1,
-      };
-    }
-
-    text += message[cursor];
-    cursor += 1;
-  }
-
-  return {
-    text,
-    nextIndex: cursor,
-  };
-}
-
-function skipApostropheLiteral(message: string, index: number, end: number): number {
-  return readApostropheLiteral(message, index, end).nextIndex;
-}
-
-function isIcuSyntaxCharacter(char: string | undefined): boolean {
-  return char === "{" || char === "}" || char === "#" || char === "<" || char === ">";
-}
-
-function skipWhitespace(message: string, start: number, end: number): number {
-  let index = start;
-
-  while (index < end && /\s/u.test(message[index])) {
-    index += 1;
-  }
-
-  return index;
-}
-
-function skipToken(message: string, start: number, end: number): number {
-  let index = start;
-
-  while (index < end && !/\s/u.test(message[index])) {
-    index += 1;
-  }
-
-  return index;
-}
-
-function readSelector(message: string, start: number, end: number): number {
-  let index = start;
-
-  while (index < end && !/\s/u.test(message[index]) && message[index] !== "{") {
-    index += 1;
-  }
-
-  return index;
 }

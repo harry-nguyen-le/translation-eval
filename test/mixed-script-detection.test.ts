@@ -8,13 +8,9 @@ import {
 } from "../src/mixed-script-detection/index";
 
 describe("expectedUnicodeScriptsForLocale", () => {
-  it("derives scripts from likely subtags", () => {
+  it("always expects Latin", () => {
     expect([...expectedUnicodeScriptsForLocale("en")]).toEqual(["Latn"]);
-    expect([...expectedUnicodeScriptsForLocale("ru")]).toEqual(["Cyrl"]);
-    expect([...expectedUnicodeScriptsForLocale("sr-Latn")]).toEqual(["Latn"]);
-    expect([...expectedUnicodeScriptsForLocale("zh-TW")]).toEqual(["Hani"]);
-    expect([...expectedUnicodeScriptsForLocale("ja")]).toEqual(["Hani", "Hira", "Kana"]);
-    expect([...expectedUnicodeScriptsForLocale("ko")]).toEqual(["Hang", "Hani"]);
+    expect([...expectedUnicodeScriptsForLocale("ja")]).toEqual(["Latn"]);
   });
 });
 
@@ -42,8 +38,8 @@ describe("extractVisibleSegments", () => {
 
   it("strips rich-text tag names from visible literals", () => {
     expect(
-      extractVisibleSegments("<link>メール</link>を送信しました").map((segment) => segment.text),
-    ).toEqual(["メールを送信しました"]);
+      extractVisibleSegments("<link>Read more</link> now").map((segment) => segment.text),
+    ).toEqual(["Read more now"]);
   });
 });
 
@@ -64,49 +60,49 @@ describe("checkIcuTranslationForMixedScripts", () => {
     ).toEqual([
       {
         char: "а",
-        script: "Cyrillic",
+        script: "NonLatin",
         path: "$",
       },
     ]);
   });
 
-  it("does not report Latin ICU syntax in a Japanese plural", () => {
+  it("does not report ICU syntax", () => {
     const result = checkIcuTranslationForMixedScripts(
-      "{count, plural, one {# 件のファイル} other {# 件のファイル}}",
-      "ja",
+      "{count, plural, one {# file deleted} other {# files deleted}}",
+      "en",
     );
 
     expect(result.hasUnexpectedScript).toBe(false);
   });
 
   it("allows exact exception terms without allowing spoofed variants", () => {
-    const valid = checkIcuTranslationForMixedScripts("PayPalからメールを送信しました", "ja", {
+    const valid = checkIcuTranslationForMixedScripts("Email from PayPal sent", "en", {
       allowedTerms: ["PayPal"],
     });
 
     expect(valid.hasUnexpectedScript).toBe(false);
 
-    const spoofed = checkIcuTranslationForMixedScripts("PаyPalからメールを送信しました", "ja", {
+    const spoofed = checkIcuTranslationForMixedScripts("Email from PаyPal sent", "en", {
       allowedTerms: ["PayPal"],
     });
 
     expect(spoofed.hasUnexpectedScript).toBe(true);
-    expect(spoofed.issues.some((issue) => issue.script === "Cyrillic")).toBe(true);
+    expect(spoofed.issues.some((issue) => issue.script === "NonLatin")).toBe(true);
   });
 
-  it("respects explicit script subtags for multi-script languages", () => {
-    expect(
-      checkIcuTranslationForMixedScripts("Lozinka je promenjena", "sr-Latn").hasUnexpectedScript,
-    ).toBe(false);
+  it("ignores locale script subtags", () => {
     expect(
       checkIcuTranslationForMixedScripts("Lozinka je promenjena", "sr").hasUnexpectedScript,
+    ).toBe(false);
+    expect(
+      checkIcuTranslationForMixedScripts("Лозинка је промењена", "sr-Latn").hasUnexpectedScript,
     ).toBe(true);
   });
 
   it("supports optional pattern-based allowed spans", () => {
     const result = checkIcuTranslationForMixedScripts(
-      "詳しくは https://example.com/help を参照してください",
-      "ja",
+      "See https://例.example/help for details",
+      "en",
       {
         allowedPatterns: [/https?:\/\/[^\s]+/u],
       },
@@ -117,9 +113,9 @@ describe("checkIcuTranslationForMixedScripts", () => {
 });
 
 describe("detectedScriptForCharacter", () => {
-  it("labels common scripts for issue reporting", () => {
+  it("labels Latin, neutral, and non-Latin characters", () => {
     expect(detectedScriptForCharacter("a")).toBe("Latin");
-    expect(detectedScriptForCharacter("а")).toBe("Cyrillic");
-    expect(detectedScriptForCharacter("あ")).toBe("Hiragana");
+    expect(detectedScriptForCharacter(".")).toBe("Neutral");
+    expect(detectedScriptForCharacter("а")).toBe("NonLatin");
   });
 });
