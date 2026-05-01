@@ -24,7 +24,7 @@ console.log(result.issues);
 
 ## CLI
 
-Run the proof of concept against `master-translations.json`:
+Run the proof of concept against `translation-data/cp-static-translations.json`:
 
 ```sh
 bun i18n:icu-syntax-preservation
