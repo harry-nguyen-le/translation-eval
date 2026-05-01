@@ -34,7 +34,7 @@ const TRANSLATION_FIELDS = [
   "french",
   "german",
 ] as const satisfies readonly TranslationField[];
-const DEFAULT_FILE = "master-translations.json";
+const DEFAULT_FILE = "translation-data/cp-static-translations.json";
 const DEFAULT_MAX_REPORTS = 50;
 
 const args = parseArgs(process.argv.slice(2));
