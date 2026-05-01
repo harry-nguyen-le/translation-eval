@@ -1,118 +1,64 @@
 import { fromMarkdown } from "mdast-util-from-markdown";
-import type { Blockquote, Content, List, ListItem, PhrasingContent, Root } from "mdast";
-import {
-  collectJsonStringEscapes,
-  compareEscapeCharacterSequences,
-  type EscapeCharacterKind,
-  type EscapeCharacterSequence,
-} from "../escape-character-preservation/index";
+import type { Heading, List, Root, RootContent } from "mdast";
 
 export type MarkdownInputFormat = "auto" | "json-string" | "runtime";
-
-export type MarkdownEscapeKind = EscapeCharacterKind;
-export type MarkdownEscapeSequence = EscapeCharacterSequence;
-
-export type MarkdownProtectedNode =
-  | {
-      type: "codeBlock";
-      value: string;
-      lang?: string;
-      meta?: string;
-    }
-  | {
-      type: "definition";
-      identifier: string;
-      url: string;
-      title?: string;
-    }
-  | {
-      type: "emphasis";
-      ancestors: string[];
-    }
-  | {
-      type: "hardBreak";
-      ancestors: string[];
-    }
-  | {
-      type: "html";
-      value: string;
-      ancestors: string[];
-    }
-  | {
-      type: "image";
-      url: string;
-      title?: string;
-      ancestors: string[];
-    }
-  | {
-      type: "imageReference";
-      identifier: string;
-      ancestors: string[];
-    }
-  | {
-      type: "inlineCode";
-      value: string;
-      ancestors: string[];
-    }
-  | {
-      type: "link";
-      url: string;
-      title?: string;
-      ancestors: string[];
-    }
-  | {
-      type: "linkReference";
-      identifier: string;
-      ancestors: string[];
-    }
-  | {
-      type: "strong";
-      ancestors: string[];
-    };
-
-export type MarkdownBlockContract = {
-  path: string;
-  signature: string;
-  protectedNodes: MarkdownProtectedNode[];
-};
-
-export type MarkdownPreservationContract = {
-  blocks: MarkdownBlockContract[];
-  escapeSequences: MarkdownEscapeSequence[];
-};
 
 export type MarkdownParseResult = {
   input: string;
   inputFormat: Exclude<MarkdownInputFormat, "auto">;
   markdown: string;
   ast: Root;
-  contract: MarkdownPreservationContract;
 };
 
-export type MarkdownPreservationIssue =
+type MarkdownStructure = {
+  headingDepths: number[];
+  lists: ListShape[];
+  tables: TableShape[];
+};
+
+type ListShape = {
+  depth: number;
+  ordered: boolean;
+  itemCount: number;
+};
+
+type TableShape = {
+  columns: number;
+  rows: number;
+};
+
+export type MarkdownValidationIssue =
   | {
       code: "input_parse_error";
-      side: "source" | "target";
+      side?: "source" | "target" | "input";
       message: string;
     }
   | {
-      code: "block_structure_changed";
-      sourceSignatures: string[];
-      targetSignatures: string[];
+      code: "heading_structure_changed";
+      message: string;
+      sourceHeadingDepths: number[];
+      targetHeadingDepths: number[];
     }
   | {
-      code: "escape_sequences_changed";
-      sourceEscapes: string[];
-      targetEscapes: string[];
+      code: "list_structure_changed";
+      message: string;
+      sourceLists: ListShape[];
+      targetLists: ListShape[];
     }
   | {
-      code: "protected_nodes_changed";
-      path: string;
-      sourceNodes: string[];
-      targetNodes: string[];
-      missingNodes: string[];
-      extraNodes: string[];
+      code: "table_structure_changed";
+      message: string;
+      sourceTables: TableShape[];
+      targetTables: TableShape[];
     };
+
+export type MarkdownValidationResult = {
+  isValid: boolean;
+  issues: MarkdownValidationIssue[];
+  parsed?: MarkdownParseResult;
+};
+
+export type MarkdownPreservationIssue = MarkdownValidationIssue;
 
 export type MarkdownPreservationResult = {
   isValid: boolean;
@@ -121,7 +67,7 @@ export type MarkdownPreservationResult = {
   target?: MarkdownParseResult;
 };
 
-export function parseMarkdownForPreservation(
+export function parseMarkdownForValidation(
   input: string,
   options: { inputFormat?: MarkdownInputFormat } = {},
 ): MarkdownParseResult {
@@ -133,8 +79,33 @@ export function parseMarkdownForPreservation(
     inputFormat: normalized.inputFormat,
     markdown: normalized.markdown,
     ast,
-    contract: extractMarkdownPreservationContract(ast, normalized.escapeSequences),
   };
+}
+
+export const parseMarkdownForPreservation = parseMarkdownForValidation;
+
+export function validateMarkdown(
+  input: string,
+  options: { inputFormat?: MarkdownInputFormat } = {},
+): MarkdownValidationResult {
+  try {
+    return {
+      isValid: true,
+      issues: [],
+      parsed: parseMarkdownForValidation(input, options),
+    };
+  } catch (error) {
+    return {
+      isValid: false,
+      issues: [
+        {
+          code: "input_parse_error",
+          side: "input",
+          message: error instanceof Error ? error.message : String(error),
+        },
+      ],
+    };
+  }
 }
 
 export function validateMarkdownPreservation(
@@ -142,8 +113,8 @@ export function validateMarkdownPreservation(
   targetInput: string,
   options: { inputFormat?: MarkdownInputFormat } = {},
 ): MarkdownPreservationResult {
-  const source = safeParseMarkdownForPreservation(sourceInput, "source", options);
-  const target = safeParseMarkdownForPreservation(targetInput, "target", options);
+  const source = safeParseMarkdown(sourceInput, "source", options);
+  const target = safeParseMarkdown(targetInput, "target", options);
   const issues: MarkdownPreservationIssue[] = [];
 
   if (!source.ok) {
@@ -154,26 +125,213 @@ export function validateMarkdownPreservation(
     issues.push(target.issue);
   }
 
-  if (!source.ok || !target.ok) {
-    return {
-      isValid: false,
-      issues,
-      source: source.ok ? source.result : undefined,
-      target: target.ok ? target.result : undefined,
-    };
+  if (source.ok && target.ok) {
+    issues.push(...compareMarkdownStructure(source.result, target.result));
   }
-
-  issues.push(...compareMarkdownContracts(source.result.contract, target.result.contract));
 
   return {
     isValid: issues.length === 0,
     issues,
-    source: source.result,
-    target: target.result,
+    source: source.ok ? source.result : undefined,
+    target: target.ok ? target.result : undefined,
   };
 }
 
-function safeParseMarkdownForPreservation(
+function compareMarkdownStructure(
+  source: MarkdownParseResult,
+  target: MarkdownParseResult,
+): MarkdownPreservationIssue[] {
+  const sourceStructure = extractMarkdownStructure(source);
+  const targetStructure = extractMarkdownStructure(target);
+  const issues: MarkdownPreservationIssue[] = [];
+
+  if (!sameArray(sourceStructure.headingDepths, targetStructure.headingDepths)) {
+    issues.push({
+      code: "heading_structure_changed",
+      message: "Heading hierarchy changed",
+      sourceHeadingDepths: sourceStructure.headingDepths,
+      targetHeadingDepths: targetStructure.headingDepths,
+    });
+  }
+
+  if (sourceStructure.lists.length > 0 && !sameJson(sourceStructure.lists, targetStructure.lists)) {
+    issues.push({
+      code: "list_structure_changed",
+      message: "List count, nesting, type, or item count changed",
+      sourceLists: sourceStructure.lists,
+      targetLists: targetStructure.lists,
+    });
+  }
+
+  if (
+    sourceStructure.tables.length > 0 &&
+    !sameJson(sourceStructure.tables, targetStructure.tables)
+  ) {
+    issues.push({
+      code: "table_structure_changed",
+      message: "Pipe table count, row count, or column count changed",
+      sourceTables: sourceStructure.tables,
+      targetTables: targetStructure.tables,
+    });
+  }
+
+  return issues;
+}
+
+function extractMarkdownStructure(parsed: MarkdownParseResult): MarkdownStructure {
+  return {
+    headingDepths: collectHeadingDepths(parsed.ast),
+    lists: hasLikelyStructuredList(parsed.markdown) ? collectListShapes(parsed.ast) : [],
+    tables: collectPipeTableShapes(parsed.markdown),
+  };
+}
+
+function collectHeadingDepths(ast: Root): number[] {
+  const depths: number[] = [];
+
+  visitRootContent(ast.children, (node) => {
+    if (node.type === "heading") {
+      depths.push((node as Heading).depth);
+    }
+  });
+
+  return depths;
+}
+
+function collectListShapes(ast: Root): ListShape[] {
+  const lists: ListShape[] = [];
+
+  visitRootContent(ast.children, (node, depth) => {
+    if (node.type !== "list") {
+      return;
+    }
+
+    const list = node as List;
+
+    lists.push({
+      depth,
+      ordered: list.ordered ?? false,
+      itemCount: list.children.length,
+    });
+  });
+
+  return lists;
+}
+
+function collectPipeTableShapes(markdown: string): TableShape[] {
+  const lines = markdown.split(/\r?\n/);
+  const tables: TableShape[] = [];
+
+  for (let index = 1; index < lines.length; index += 1) {
+    const separator = lines[index];
+
+    if (!separator || !isPipeTableSeparator(separator)) {
+      continue;
+    }
+
+    const header = lines[index - 1] ?? "";
+    const columns = countPipeTableColumns(header);
+
+    if (columns < 2) {
+      continue;
+    }
+
+    let rows = 1;
+
+    for (let rowIndex = index + 1; rowIndex < lines.length; rowIndex += 1) {
+      const row = lines[rowIndex] ?? "";
+
+      if (!row.includes("|") || row.trim().length === 0) {
+        break;
+      }
+
+      rows += 1;
+    }
+
+    tables.push({
+      columns,
+      rows,
+    });
+  }
+
+  return tables;
+}
+
+function hasLikelyStructuredList(markdown: string): boolean {
+  const listItemLines = markdown
+    .split(/\r?\n/)
+    .filter((line) => /^ {0,3}(?:[-+*]|\d+[.)])\s+\S/u.test(line));
+
+  return listItemLines.length > 1;
+}
+
+function isPipeTableSeparator(line: string): boolean {
+  const cells = splitPipeTableCells(line);
+
+  return cells.length >= 2 && cells.every((cell) => /^:?-{3,}:?$/u.test(cell.trim()));
+}
+
+function countPipeTableColumns(line: string): number {
+  return splitPipeTableCells(line).length;
+}
+
+function splitPipeTableCells(line: string): string[] {
+  const trimmed = line.trim();
+  const withoutOuterPipes = trimmed.replace(/^\|/u, "").replace(/\|$/u, "");
+  const cells: string[] = [];
+  let current = "";
+  let escaped = false;
+
+  for (const char of withoutOuterPipes) {
+    if (escaped) {
+      current += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      current += char;
+      escaped = true;
+      continue;
+    }
+
+    if (char === "|") {
+      cells.push(current);
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  cells.push(current);
+
+  return cells;
+}
+
+function visitRootContent(
+  nodes: RootContent[],
+  visit: (node: RootContent, depth: number) => void,
+  depth = 0,
+): void {
+  for (const node of nodes) {
+    visit(node, depth);
+
+    if ("children" in node && Array.isArray(node.children)) {
+      visitRootContent(node.children as RootContent[], visit, depth + 1);
+    }
+  }
+}
+
+function sameArray(left: readonly number[], right: readonly number[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function sameJson(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function safeParseMarkdown(
   input: string,
   side: "source" | "target",
   options: { inputFormat?: MarkdownInputFormat },
@@ -181,7 +339,7 @@ function safeParseMarkdownForPreservation(
   try {
     return {
       ok: true,
-      result: parseMarkdownForPreservation(input, options),
+      result: parseMarkdownForValidation(input, options),
     };
   } catch (error) {
     return {
@@ -201,7 +359,6 @@ function normalizeMarkdownInput(
 ): {
   inputFormat: Exclude<MarkdownInputFormat, "auto">;
   markdown: string;
-  escapeSequences: MarkdownEscapeSequence[];
 } {
   const resolvedFormat = inputFormat === "auto" ? detectMarkdownInputFormat(input) : inputFormat;
 
@@ -209,7 +366,6 @@ function normalizeMarkdownInput(
     return {
       inputFormat: "runtime",
       markdown: input,
-      escapeSequences: [],
     };
   }
 
@@ -222,398 +378,10 @@ function normalizeMarkdownInput(
   return {
     inputFormat: "json-string",
     markdown: parsed,
-    escapeSequences: collectJsonStringEscapes(input),
   };
 }
 
 function detectMarkdownInputFormat(input: string): Exclude<MarkdownInputFormat, "auto"> {
   const trimmed = input.trim();
   return trimmed.startsWith('"') && trimmed.endsWith('"') ? "json-string" : "runtime";
-}
-
-function extractMarkdownPreservationContract(
-  ast: Root,
-  escapeSequences: MarkdownEscapeSequence[],
-): MarkdownPreservationContract {
-  const blocks: MarkdownBlockContract[] = [];
-
-  for (const [index, child] of ast.children.entries()) {
-    collectBlockContract(child, `$/${blockPathSegment(child, index)}`, blocks);
-  }
-
-  return {
-    blocks,
-    escapeSequences,
-  };
-}
-
-function collectBlockContract(node: Content, path: string, blocks: MarkdownBlockContract[]): void {
-  switch (node.type) {
-    case "blockquote":
-      collectBlockquoteContract(node, path, blocks);
-      return;
-    case "break":
-    case "delete":
-    case "emphasis":
-    case "footnoteReference":
-    case "image":
-    case "imageReference":
-    case "inlineCode":
-    case "link":
-    case "linkReference":
-    case "strong":
-    case "text":
-      return;
-    case "code":
-      blocks.push({
-        path,
-        signature: blockSignature(node),
-        protectedNodes: [
-          {
-            type: "codeBlock",
-            value: node.value,
-            lang: node.lang ?? undefined,
-            meta: node.meta ?? undefined,
-          },
-        ],
-      });
-      return;
-    case "definition":
-      blocks.push({
-        path,
-        signature: blockSignature(node),
-        protectedNodes: [
-          {
-            type: "definition",
-            identifier: node.identifier,
-            url: node.url,
-            title: node.title ?? undefined,
-          },
-        ],
-      });
-      return;
-    case "heading":
-      blocks.push({
-        path,
-        signature: blockSignature(node),
-        protectedNodes: collectInlineProtectedNodes(node.children),
-      });
-      return;
-    case "html":
-      blocks.push({
-        path,
-        signature: blockSignature(node),
-        protectedNodes: [
-          {
-            type: "html",
-            value: node.value,
-            ancestors: [],
-          },
-        ],
-      });
-      return;
-    case "list":
-      collectListContract(node, path, blocks);
-      return;
-    case "listItem":
-      collectListItemContract(node, path, blocks);
-      return;
-    case "paragraph":
-      blocks.push({
-        path,
-        signature: blockSignature(node),
-        protectedNodes: collectInlineProtectedNodes(node.children),
-      });
-      return;
-    case "thematicBreak":
-      blocks.push({
-        path,
-        signature: blockSignature(node),
-        protectedNodes: [],
-      });
-      return;
-    case "yaml":
-      blocks.push({
-        path,
-        signature: blockSignature(node),
-        protectedNodes: [
-          {
-            type: "html",
-            value: node.value,
-            ancestors: [],
-          },
-        ],
-      });
-      return;
-  }
-}
-
-function collectBlockquoteContract(
-  node: Blockquote,
-  path: string,
-  blocks: MarkdownBlockContract[],
-): void {
-  blocks.push({
-    path,
-    signature: blockSignature(node),
-    protectedNodes: [],
-  });
-
-  for (const [index, child] of node.children.entries()) {
-    collectBlockContract(child, `${path}/${blockPathSegment(child, index)}`, blocks);
-  }
-}
-
-function collectListContract(node: List, path: string, blocks: MarkdownBlockContract[]): void {
-  blocks.push({
-    path,
-    signature: blockSignature(node),
-    protectedNodes: [],
-  });
-
-  for (const [index, child] of node.children.entries()) {
-    collectBlockContract(child, `${path}/${blockPathSegment(child, index)}`, blocks);
-  }
-}
-
-function collectListItemContract(
-  node: ListItem,
-  path: string,
-  blocks: MarkdownBlockContract[],
-): void {
-  blocks.push({
-    path,
-    signature: blockSignature(node),
-    protectedNodes: [],
-  });
-
-  for (const [index, child] of node.children.entries()) {
-    collectBlockContract(child, `${path}/${blockPathSegment(child, index)}`, blocks);
-  }
-}
-
-function collectInlineProtectedNodes(
-  children: PhrasingContent[],
-  ancestors: string[] = [],
-): MarkdownProtectedNode[] {
-  const protectedNodes: MarkdownProtectedNode[] = [];
-
-  for (const child of children) {
-    switch (child.type) {
-      case "break":
-        protectedNodes.push({
-          type: "hardBreak",
-          ancestors,
-        });
-        break;
-      case "emphasis":
-        protectedNodes.push({
-          type: "emphasis",
-          ancestors,
-        });
-        protectedNodes.push(
-          ...collectInlineProtectedNodes(child.children, [...ancestors, "emphasis"]),
-        );
-        break;
-      case "html":
-        protectedNodes.push({
-          type: "html",
-          value: child.value,
-          ancestors,
-        });
-        break;
-      case "image":
-        protectedNodes.push({
-          type: "image",
-          url: child.url,
-          title: child.title ?? undefined,
-          ancestors,
-        });
-        break;
-      case "imageReference":
-        protectedNodes.push({
-          type: "imageReference",
-          identifier: child.identifier,
-          ancestors,
-        });
-        break;
-      case "inlineCode":
-        protectedNodes.push({
-          type: "inlineCode",
-          value: child.value,
-          ancestors,
-        });
-        break;
-      case "link":
-        protectedNodes.push({
-          type: "link",
-          url: child.url,
-          title: child.title ?? undefined,
-          ancestors,
-        });
-        protectedNodes.push(
-          ...collectInlineProtectedNodes(child.children, [...ancestors, `link:${child.url}`]),
-        );
-        break;
-      case "linkReference":
-        protectedNodes.push({
-          type: "linkReference",
-          identifier: child.identifier,
-          ancestors,
-        });
-        protectedNodes.push(
-          ...collectInlineProtectedNodes(child.children, [
-            ...ancestors,
-            `linkReference:${child.identifier}`,
-          ]),
-        );
-        break;
-      case "strong":
-        protectedNodes.push({
-          type: "strong",
-          ancestors,
-        });
-        protectedNodes.push(
-          ...collectInlineProtectedNodes(child.children, [...ancestors, "strong"]),
-        );
-        break;
-    }
-  }
-
-  return protectedNodes;
-}
-
-function compareMarkdownContracts(
-  source: MarkdownPreservationContract,
-  target: MarkdownPreservationContract,
-): MarkdownPreservationIssue[] {
-  const issues: MarkdownPreservationIssue[] = [];
-  const sourceSignatures = source.blocks.map((block) => block.signature);
-  const targetSignatures = target.blocks.map((block) => block.signature);
-
-  if (!sameArray(sourceSignatures, targetSignatures)) {
-    issues.push({
-      code: "block_structure_changed",
-      sourceSignatures,
-      targetSignatures,
-    });
-  }
-
-  issues.push(...compareEscapeCharacterSequences(source.escapeSequences, target.escapeSequences));
-
-  for (let index = 0; index < Math.min(source.blocks.length, target.blocks.length); index += 1) {
-    const sourceBlock = source.blocks[index];
-    const targetBlock = target.blocks[index];
-
-    if (!sourceBlock || !targetBlock) {
-      continue;
-    }
-
-    const sourceNodes = sourceBlock.protectedNodes.map(formatProtectedNode);
-    const targetNodes = targetBlock.protectedNodes.map(formatProtectedNode);
-
-    if (!sameMultiset(sourceNodes, targetNodes)) {
-      const missingNodes = subtractMultiset(sourceNodes, targetNodes);
-      const extraNodes = subtractMultiset(targetNodes, sourceNodes);
-
-      issues.push({
-        code: "protected_nodes_changed",
-        path: sourceBlock.path,
-        sourceNodes: sortStrings(sourceNodes),
-        targetNodes: sortStrings(targetNodes),
-        missingNodes: sortStrings(missingNodes),
-        extraNodes: sortStrings(extraNodes),
-      });
-    }
-  }
-
-  return issues;
-}
-
-function blockPathSegment(node: Content, index: number): string {
-  return `${node.type}[${index}]`;
-}
-
-function blockSignature(node: Content): string {
-  switch (node.type) {
-    case "blockquote":
-      return "blockquote";
-    case "code":
-      return `codeBlock(lang=${node.lang ?? ""},meta=${node.meta ?? ""})`;
-    case "definition":
-      return `definition(${node.identifier})`;
-    case "heading":
-      return `heading(depth=${node.depth})`;
-    case "html":
-      return "html";
-    case "list":
-      return `list(ordered=${String(node.ordered)},start=${node.start ?? ""},spread=${String(node.spread)})`;
-    case "listItem":
-      return `listItem(checked=${node.checked ?? ""},spread=${String(node.spread)})`;
-    case "paragraph":
-      return "paragraph";
-    case "thematicBreak":
-      return "thematicBreak";
-    case "yaml":
-      return "yaml";
-    default:
-      return node.type;
-  }
-}
-
-function formatProtectedNode(node: MarkdownProtectedNode): string {
-  switch (node.type) {
-    case "codeBlock":
-      return `codeBlock|lang=${node.lang ?? ""}|meta=${node.meta ?? ""}|value=${node.value}`;
-    case "definition":
-      return `definition|identifier=${node.identifier}|url=${node.url}|title=${node.title ?? ""}`;
-    case "emphasis":
-      return `emphasis|ancestors=${node.ancestors.join(">")}`;
-    case "hardBreak":
-      return `hardBreak|ancestors=${node.ancestors.join(">")}`;
-    case "html":
-      return `html|value=${node.value}|ancestors=${node.ancestors.join(">")}`;
-    case "image":
-      return `image|url=${node.url}|title=${node.title ?? ""}|ancestors=${node.ancestors.join(">")}`;
-    case "imageReference":
-      return `imageReference|identifier=${node.identifier}|ancestors=${node.ancestors.join(">")}`;
-    case "inlineCode":
-      return `inlineCode|value=${node.value}|ancestors=${node.ancestors.join(">")}`;
-    case "link":
-      return `link|url=${node.url}|title=${node.title ?? ""}|ancestors=${node.ancestors.join(">")}`;
-    case "linkReference":
-      return `linkReference|identifier=${node.identifier}|ancestors=${node.ancestors.join(">")}`;
-    case "strong":
-      return `strong|ancestors=${node.ancestors.join(">")}`;
-  }
-}
-
-function sameArray(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
-function sameMultiset(left: readonly string[], right: readonly string[]): boolean {
-  return sameArray(sortStrings(left), sortStrings(right));
-}
-
-function subtractMultiset(left: readonly string[], right: readonly string[]): string[] {
-  const remaining = [...right];
-  const difference: string[] = [];
-
-  for (const value of left) {
-    const index = remaining.indexOf(value);
-
-    if (index === -1) {
-      difference.push(value);
-      continue;
-    }
-
-    remaining.splice(index, 1);
-  }
-
-  return difference;
-}
-
-function sortStrings(values: readonly string[]): string[] {
-  return [...values].sort((left, right) => left.localeCompare(right));
 }
