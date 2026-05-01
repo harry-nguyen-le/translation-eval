@@ -26,7 +26,7 @@ const result = validateUrlPreservation(
 console.log(result.issues);
 ```
 
-Run the proof of concept against `master-translations.json`:
+Run the proof of concept against `translation-data/cp-static-translations.json`:
 
 ```sh
 bun i18n:url-preservation
