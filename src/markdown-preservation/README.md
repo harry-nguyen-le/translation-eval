@@ -1,42 +1,44 @@
-# Markdown Preservation
+# Markdown Validation
 
-Checks that translated Markdown preserves protected structure and destinations.
+Validates translated Markdown by parsing it with `mdast-util-from-markdown`.
 
-The check parses Markdown after translation and assumes the input is a translated raw Markdown string. It accepts runtime Markdown strings and JSON string literals, so raw escaped values such as `"\n#### Rooms  \n..."` are decoded before Markdown parsing while the raw escape inventory is still recorded.
+The check accepts runtime Markdown strings and JSON string literals, so raw escaped values such as `"\n#### Rooms  \n..."` are decoded before Markdown parsing.
 
-`master-translations.json` is the static frontend string set and is not expected to contain Markdown. Use `dummy-markdown.json` for Markdown preservation evaluation.
+When source content is available, it compares source and target Markdown structure:
 
-For embedded Markdown links, the visible label is translatable but the destination is protected. For example, `[the docs](/docs)` may become `[la documentation](/docs)`, but not `[la documentation](/aide)`.
+- heading hierarchy, as the sequence of heading depths
+- list structure, as list count, nesting depth, ordered/unordered type, and item counts
+- pipe table shape, as table count, row count, and column count
+
+When source content is not available, such as `translation-data/extracted-translations.json`, the CLI can only parse-check the target strings.
 
 ## API
 
 ```ts
-import { parseMarkdownForPreservation, validateMarkdownPreservation } from "translation-eval";
+import { parseMarkdownForValidation, validateMarkdownPreservation } from "translation-eval";
 
-const parsed = parseMarkdownForPreservation(String.raw`"\n#### Rooms  \nMake yourself at home."`);
+const parsed = parseMarkdownForValidation(String.raw`"\n#### Rooms  \nMake yourself at home."`);
 
-console.log(parsed.contract.blocks);
+console.log(parsed.ast.children);
 
 const result = validateMarkdownPreservation(
-  "Read [the docs](/docs) before running `npm install`.",
-  "Avant d'executer `npm install`, lisez [la documentation](/docs).",
+  "## Cancellation\n### Refunds",
+  "## Annulation\n### Remboursements",
 );
 
 console.log(result.isValid); // true
-
-const invalidLink = validateMarkdownPreservation(
-  "Read [the cancellation policy](/policies/cancellation) before booking.",
-  "Avant de reserver, lisez [la politique d'annulation](/politiques/annulation).",
-);
-
-console.log(invalidLink.isValid); // false
-console.log(invalidLink.issues);
 ```
 
 ## CLI
 
-Run the proof of concept against `dummy-markdown.json`:
+Run against `dummy-markdown.json`:
 
 ```sh
 bun i18n:markdown-preservation
+```
+
+Run against extracted translations:
+
+```sh
+bun i18n:markdown-preservation translation-data/extracted-translations.json
 ```

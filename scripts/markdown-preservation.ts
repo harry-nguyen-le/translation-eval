@@ -1,27 +1,35 @@
 import { readFileSync } from "node:fs";
 
-import { validateMarkdownPreservation } from "../src/markdown-preservation/index";
-import type { MarkdownPreservationIssue } from "../src/markdown-preservation/index";
+import { validateMarkdown, validateMarkdownPreservation } from "../src/markdown-preservation/index";
+import type { MarkdownValidationIssue } from "../src/markdown-preservation/index";
 
 type TargetField = "french" | "german";
 
-type MarkdownEntry = {
+type StaticTranslationEntry = {
   description?: unknown;
   english?: string | null;
 } & Partial<Record<TargetField, string | null>>;
 
-type MarkdownEntries = Record<string, MarkdownEntry>;
+type ExtractedTranslationEntry = {
+  sk?: string | null;
+  translatedContent?: string | null;
+};
 
 type InvalidEntry = {
   id: string;
-  field: TargetField;
+  field: string;
+  locale: string | null;
+  value: string;
   description: unknown;
-  source: string;
-  target: string;
-  issues: MarkdownPreservationIssue[];
+  source?: string;
+  issues: MarkdownValidationIssue[];
 };
 
-const TARGET_FIELDS = ["french", "german"] as const satisfies readonly TargetField[];
+const TARGET_LOCALES = {
+  french: "fr",
+  german: "de",
+} as const;
+
 const DEFAULT_FILE = "dummy-markdown.json";
 const DEFAULT_MAX_REPORTS = 50;
 
@@ -30,8 +38,7 @@ const filePath = args.filePath ?? DEFAULT_FILE;
 const maxReports = args.maxReports ?? DEFAULT_MAX_REPORTS;
 
 const rawEntries = readJsonFile(filePath);
-const entries = assertMarkdownEntries(rawEntries, filePath);
-const result = evaluateMarkdownEntries(entries);
+const result = evaluateMarkdownFile(rawEntries, filePath);
 
 printSummary(filePath, result, maxReports);
 
@@ -39,7 +46,21 @@ if (result.invalidEntries.length > 0) {
   process.exitCode = 1;
 }
 
-function evaluateMarkdownEntries(entries: MarkdownEntries) {
+function evaluateMarkdownFile(value: unknown, path: string) {
+  if (Array.isArray(value)) {
+    return evaluateExtractedTranslations(value, path);
+  }
+
+  if (!value || typeof value !== "object") {
+    throw new Error(
+      `${path} must contain either a JSON object keyed by translation id or an extracted translation array`,
+    );
+  }
+
+  return evaluateStaticTranslations(value as Record<string, StaticTranslationEntry>);
+}
+
+function evaluateStaticTranslations(entries: Record<string, StaticTranslationEntry>) {
   const invalidEntries: InvalidEntry[] = [];
   let checkedTranslations = 0;
   let skippedTranslations = 0;
@@ -48,11 +69,11 @@ function evaluateMarkdownEntries(entries: MarkdownEntries) {
     const source = entry.english;
 
     if (typeof source !== "string") {
-      skippedTranslations += TARGET_FIELDS.length;
+      skippedTranslations += Object.keys(TARGET_LOCALES).length;
       continue;
     }
 
-    for (const field of TARGET_FIELDS) {
+    for (const [field, locale] of Object.entries(TARGET_LOCALES) as Array<[TargetField, string]>) {
       const target = entry[field];
 
       if (typeof target !== "string") {
@@ -68,9 +89,10 @@ function evaluateMarkdownEntries(entries: MarkdownEntries) {
         invalidEntries.push({
           id,
           field,
-          description: entry.description ?? null,
+          locale,
+          value: target,
           source,
-          target,
+          description: entry.description ?? null,
           issues: validation.issues,
         });
       }
@@ -78,7 +100,50 @@ function evaluateMarkdownEntries(entries: MarkdownEntries) {
   }
 
   return {
+    mode: "source-preservation",
     entries: Object.keys(entries).length,
+    checkedTranslations,
+    skippedTranslations,
+    invalidEntries,
+  };
+}
+
+function evaluateExtractedTranslations(value: unknown[], path: string) {
+  const invalidEntries: InvalidEntry[] = [];
+  let checkedTranslations = 0;
+  let skippedTranslations = 0;
+
+  for (const [index, entry] of value.entries()) {
+    if (!entry || typeof entry !== "object") {
+      throw new Error(`${path}[${index}] must be an object`);
+    }
+
+    const translation = entry as ExtractedTranslationEntry;
+
+    if (typeof translation.translatedContent !== "string") {
+      skippedTranslations += 1;
+      continue;
+    }
+
+    checkedTranslations += 1;
+
+    const validation = validateMarkdown(translation.translatedContent);
+
+    if (!validation.isValid) {
+      invalidEntries.push({
+        id: String(index),
+        field: "translatedContent",
+        locale: typeof translation.sk === "string" ? translation.sk : null,
+        value: translation.translatedContent,
+        description: null,
+        issues: validation.issues,
+      });
+    }
+  }
+
+  return {
+    mode: "parse-only",
+    entries: value.length,
     checkedTranslations,
     skippedTranslations,
     invalidEntries,
@@ -92,14 +157,6 @@ function readJsonFile(path: string): unknown {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to read ${path}: ${message}`);
   }
-}
-
-function assertMarkdownEntries(value: unknown, path: string): MarkdownEntries {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error(`${path} must contain a JSON object keyed by Markdown sample id`);
-  }
-
-  return value as MarkdownEntries;
 }
 
 function parseArgs(args: string[]): {
@@ -139,11 +196,12 @@ function parseArgs(args: string[]): {
 
 function printSummary(
   filePath: string,
-  result: ReturnType<typeof evaluateMarkdownEntries>,
+  result: ReturnType<typeof evaluateMarkdownFile>,
   maxReports: number,
 ): void {
-  console.log("Markdown preservation");
+  console.log("Markdown validation");
   console.log(`File: ${filePath}`);
+  console.log(`Mode: ${result.mode}`);
   console.log(`Entries: ${result.entries}`);
   console.log(`Checked translations: ${result.checkedTranslations}`);
   console.log(`Skipped translations: ${result.skippedTranslations}`);
