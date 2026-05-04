@@ -161,9 +161,9 @@ function validatePluralSelectors(
   for (const [index, element] of ast.entries()) {
     const elementPath = `${path}/${index}`;
 
-    if (isPluralElement(element)) {
+    if (isPluralElement(element) || isSelectElement(element)) {
       for (const [selector, option] of Object.entries(element.options)) {
-        if (!VALID_PLURAL_SELECTOR_PATTERN.test(selector)) {
+        if (isPluralElement(element) && !VALID_PLURAL_SELECTOR_PATTERN.test(selector)) {
           issues.push({
             code: "invalid_plural_selector",
             side,
@@ -175,14 +175,6 @@ function validatePluralSelectors(
           });
         }
 
-        issues.push(...validatePluralSelectors(option.value, side, `${elementPath}[${selector}]`));
-      }
-
-      continue;
-    }
-
-    if (isSelectElement(element)) {
-      for (const [selector, option] of Object.entries(element.options)) {
         issues.push(...validatePluralSelectors(option.value, side, `${elementPath}[${selector}]`));
       }
 
@@ -234,12 +226,8 @@ function validateSelectSelectors(
       });
     }
 
-    const missingSelectors = source.selectors.filter(
-      (selector) => !target.selectors.includes(selector),
-    );
-    const extraSelectors = target.selectors.filter(
-      (selector) => !source.selectors.includes(selector),
-    );
+    const missingSelectors = difference(source.selectors, target.selectors);
+    const extraSelectors = difference(target.selectors, source.selectors);
 
     if (missingSelectors.length > 0 || extraSelectors.length > 0) {
       issues.push({
@@ -267,27 +255,19 @@ function collectSelectShapes(
   for (const [index, element] of ast.entries()) {
     const elementPath = `${path}/${index}`;
 
-    if (isSelectElement(element)) {
-      shapes.push({
-        path: elementPath,
-        argumentName: element.value,
-        selectors: Object.keys(element.options).sort(compareStrings),
-        location: element.location,
-      });
+    if (isPluralElement(element) || isSelectElement(element)) {
+      const selectors = Object.keys(element.options).sort(compareStrings);
 
-      for (const selector of Object.keys(element.options).sort(compareStrings)) {
-        collectSelectShapes(
-          element.options[selector]?.value ?? [],
-          `${elementPath}[${selector}]`,
-          shapes,
-        );
+      if (isSelectElement(element)) {
+        shapes.push({
+          path: elementPath,
+          argumentName: element.value,
+          selectors,
+          location: element.location,
+        });
       }
 
-      continue;
-    }
-
-    if (isPluralElement(element)) {
-      for (const selector of Object.keys(element.options).sort(compareStrings)) {
+      for (const selector of selectors) {
         collectSelectShapes(
           element.options[selector]?.value ?? [],
           `${elementPath}[${selector}]`,
@@ -308,6 +288,10 @@ function collectSelectShapes(
 
 function compareStrings(left: string, right: string): number {
   return left.localeCompare(right);
+}
+
+function difference(source: readonly string[], target: readonly string[]): string[] {
+  return source.filter((value) => !target.includes(value));
 }
 
 function formatIssue(issue: IcuSyntaxPreservationIssue): string {

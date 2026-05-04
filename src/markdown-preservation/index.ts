@@ -88,24 +88,20 @@ export function validateMarkdown(
   input: string,
   options: { inputFormat?: MarkdownInputFormat } = {},
 ): MarkdownValidationResult {
-  try {
-    return {
-      isValid: true,
-      issues: [],
-      parsed: parseMarkdownForValidation(input, options),
-    };
-  } catch (error) {
+  const parsed = safeParseMarkdown(input, "input", options);
+
+  if (!parsed.ok) {
     return {
       isValid: false,
-      issues: [
-        {
-          code: "input_parse_error",
-          side: "input",
-          message: error instanceof Error ? error.message : String(error),
-        },
-      ],
+      issues: [parsed.issue],
     };
   }
+
+  return {
+    isValid: true,
+    issues: [],
+    parsed: parsed.result,
+  };
 }
 
 export function validateMarkdownPreservation(
@@ -258,11 +254,7 @@ function collectPipeTableShapes(markdown: string): TableShape[] {
 }
 
 function hasLikelyStructuredList(markdown: string): boolean {
-  const listItemLines = markdown
-    .split(/\r?\n/)
-    .filter((line) => /^ {0,3}(?:[-+*]|\d+[.)])\s+\S/u.test(line));
-
-  return listItemLines.length > 1;
+  return (markdown.match(/^ {0,3}(?:[-+*]|\d+[.)])\s+\S/gmu)?.length ?? 0) > 1;
 }
 
 function isPipeTableSeparator(line: string): boolean {
@@ -333,7 +325,7 @@ function sameJson(left: unknown, right: unknown): boolean {
 
 function safeParseMarkdown(
   input: string,
-  side: "source" | "target",
+  side: "source" | "target" | "input",
   options: { inputFormat?: MarkdownInputFormat },
 ): { ok: true; result: MarkdownParseResult } | { ok: false; issue: MarkdownPreservationIssue } {
   try {

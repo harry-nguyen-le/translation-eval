@@ -46,7 +46,7 @@ export type MixedScriptCheckResult = {
 };
 
 export function expectedUnicodeScriptsForLocale(_locale: string): Set<string> {
-  return new Set(["Latn"]);
+  return new Set(EXPECTED_SCRIPTS);
 }
 
 export function extractVisibleSegments(message: string): VisibleSegment[] {
@@ -89,15 +89,11 @@ export function charMatchesScript(char: string, script: string): boolean {
 }
 
 export function detectedScriptForCharacter(char: string): DetectedScript {
-  if (isNeutralCharacter(char)) {
-    return "Neutral";
-  }
-
-  if (charMatchesScript(char, "Latn")) {
-    return "Latin";
-  }
-
-  return "NonLatin";
+  return isNeutralCharacter(char)
+    ? "Neutral"
+    : charMatchesScript(char, "Latn")
+      ? "Latin"
+      : "NonLatin";
 }
 
 function checkSegment(segment: VisibleSegment, options: MixedScriptCheckOptions): ScriptIssue[] {
@@ -108,14 +104,12 @@ function checkSegment(segment: VisibleSegment, options: MixedScriptCheckOptions)
   let index = 0;
 
   for (const char of text) {
-    if (
-      !isIndexAllowed(index, allowedRanges) &&
-      !isNeutralCharacter(char) &&
-      !charMatchesScript(char, "Latn")
-    ) {
+    const script = detectedScriptForCharacter(char);
+
+    if (!isIndexAllowed(index, allowedRanges) && script === "NonLatin") {
       issues.push({
         char,
-        script: detectedScriptForCharacter(char),
+        script,
         indexInSegment: index,
         indexInMessage: segment.start + index,
         segment: text,
@@ -225,15 +219,15 @@ function optionType(element: PluralElement | SelectElement): "plural" | "select"
 
 function visibleText(ast: readonly MessageFormatElement[]): string {
   return ast
-    .map((element) => {
-      if (element.type === TYPE.literal) {
-        return element.value;
-      }
-      if (element.type === TYPE.pound) {
-        return "#";
-      }
-      return element.type === TYPE.tag ? visibleText(element.children) : "";
-    })
+    .map((element) =>
+      element.type === TYPE.literal
+        ? element.value
+        : element.type === TYPE.pound
+          ? "#"
+          : element.type === TYPE.tag
+            ? visibleText(element.children)
+            : "",
+    )
     .join("");
 }
 

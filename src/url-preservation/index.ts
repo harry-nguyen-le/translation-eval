@@ -23,18 +23,7 @@ export type UrlPreservationResult = {
 };
 
 export function extractUrls(content: string): string[] {
-  const matches = content.matchAll(URL_PATTERN);
-  const urls: string[] = [];
-
-  for (const match of matches) {
-    const url = trimUrl(match[0]);
-
-    if (url.length > 0) {
-      urls.push(url);
-    }
-  }
-
-  return urls;
+  return Array.from(content.matchAll(URL_PATTERN), (match) => trimUrl(match[0])).filter(Boolean);
 }
 
 export function validateUrlPreservation(source: string, target: string): UrlPreservationResult {
@@ -85,16 +74,14 @@ export function formatUrlPreservationIssues(issues: readonly UrlPreservationIssu
 function trimUrl(url: string): string {
   let trimmed = url.replace(TRAILING_PUNCTUATION_PATTERN, "");
 
-  while (trimmed.endsWith(")") && count(trimmed, "(") < count(trimmed, ")")) {
-    trimmed = trimmed.slice(0, -1);
-  }
-
-  while (trimmed.endsWith("]") && count(trimmed, "[") < count(trimmed, "]")) {
-    trimmed = trimmed.slice(0, -1);
-  }
-
-  while (trimmed.endsWith("}") && count(trimmed, "{") < count(trimmed, "}")) {
-    trimmed = trimmed.slice(0, -1);
+  for (const [open, close] of [
+    ["(", ")"],
+    ["[", "]"],
+    ["{", "}"],
+  ] as const) {
+    while (trimmed.endsWith(close) && count(trimmed, open) < count(trimmed, close)) {
+      trimmed = trimmed.slice(0, -1);
+    }
   }
 
   return trimmed;
@@ -124,15 +111,7 @@ function difference(source: readonly string[], target: readonly string[]): strin
 }
 
 function count(value: string, character: string): number {
-  let total = 0;
-
-  for (const char of value) {
-    if (char === character) {
-      total += 1;
-    }
-  }
-
-  return total;
+  return value.split(character).length - 1;
 }
 
 function formatIssue(issue: UrlPreservationIssue): string {

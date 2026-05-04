@@ -20,42 +20,34 @@ export type EscapeCharacterPreservationIssue = {
   targetEscapes: string[];
 };
 
+const ESCAPE_KINDS: Partial<Record<string, EscapeCharacterKind>> = {
+  "\\": "backslash",
+  "/": "slash",
+  b: "backspace",
+  f: "form-feed",
+  n: "newline",
+  r: "carriage-return",
+  t: "tab",
+  u: "unicode",
+};
+
 export function collectJsonStringEscapes(input: string): EscapeCharacterSequence[] {
   const escapePattern = /\\(?:[\\/bfnrt]|u[0-9a-fA-F]{4})/g;
-  const sequences: EscapeCharacterSequence[] = [];
-
-  for (const match of input.matchAll(escapePattern)) {
-    sequences.push({
-      raw: match[0],
-      kind: classifyJsonEscape(match[0]),
-      index: match.index,
-    });
-  }
-
-  return sequences;
+  return Array.from(input.matchAll(escapePattern), (match) => ({
+    raw: match[0],
+    kind: classifyJsonEscape(match[0]),
+    index: match.index,
+  }));
 }
 
 export function classifyJsonEscape(raw: string): EscapeCharacterKind {
-  switch (raw[1]) {
-    case "\\":
-      return "backslash";
-    case "/":
-      return "slash";
-    case "b":
-      return "backspace";
-    case "f":
-      return "form-feed";
-    case "n":
-      return "newline";
-    case "r":
-      return "carriage-return";
-    case "t":
-      return "tab";
-    case "u":
-      return "unicode";
-    default:
-      throw new Error(`Unsupported JSON escape sequence: ${raw}`);
+  const kind = ESCAPE_KINDS[raw[1] ?? ""];
+
+  if (!kind) {
+    throw new Error(`Unsupported JSON escape sequence: ${raw}`);
   }
+
+  return kind;
 }
 
 export function compareEscapeCharacterSequences(
@@ -65,10 +57,7 @@ export function compareEscapeCharacterSequences(
   const sourceEscapes = source.map((escape) => escape.raw);
   const targetEscapes = target.map((escape) => escape.raw);
 
-  if (
-    (sourceEscapes.length > 0 || targetEscapes.length > 0) &&
-    !sameMultiset(sourceEscapes, targetEscapes)
-  ) {
+  if (!sameMultiset(sourceEscapes, targetEscapes)) {
     return [
       {
         code: "escape_sequences_changed",
@@ -232,31 +221,7 @@ function readJsonStringLiteral(
 }
 
 function findMatchingObjectEnd(rawJson: string, start: number): number {
-  let index = start;
-  let depth = 0;
-
-  while (index < rawJson.length) {
-    const char = rawJson[index];
-
-    if (char === '"') {
-      index = readJsonStringLiteral(rawJson, index).end;
-      continue;
-    }
-
-    if (char === "{") {
-      depth += 1;
-    } else if (char === "}") {
-      depth -= 1;
-
-      if (depth === 0) {
-        return index;
-      }
-    }
-
-    index += 1;
-  }
-
-  throw new Error(`Unterminated JSON object at index ${start}`);
+  return findMatchingDelimitedEnd(rawJson, start, "{", "}", "object");
 }
 
 function skipJsonValue(rawJson: string, start: number): number {
@@ -285,6 +250,16 @@ function skipJsonValue(rawJson: string, start: number): number {
 }
 
 function findMatchingArrayEnd(rawJson: string, start: number): number {
+  return findMatchingDelimitedEnd(rawJson, start, "[", "]", "array");
+}
+
+function findMatchingDelimitedEnd(
+  rawJson: string,
+  start: number,
+  open: string,
+  close: string,
+  label: "array" | "object",
+): number {
   let index = start;
   let depth = 0;
 
@@ -296,9 +271,9 @@ function findMatchingArrayEnd(rawJson: string, start: number): number {
       continue;
     }
 
-    if (char === "[") {
+    if (char === open) {
       depth += 1;
-    } else if (char === "]") {
+    } else if (char === close) {
       depth -= 1;
 
       if (depth === 0) {
@@ -309,7 +284,7 @@ function findMatchingArrayEnd(rawJson: string, start: number): number {
     index += 1;
   }
 
-  throw new Error(`Unterminated JSON array at index ${start}`);
+  throw new Error(`Unterminated JSON ${label} at index ${start}`);
 }
 
 function skipWhitespace(rawJson: string, start: number): number {
