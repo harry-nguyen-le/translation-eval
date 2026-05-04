@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 
-import { validateIcuSyntaxPreservation } from "../src/icu-syntax-preservation/index";
+import {
+  validateIcuPluralSelectors,
+  validateIcuSyntaxPreservation,
+} from "../src/icu-syntax-preservation/index";
 import type { IcuSyntaxPreservationIssue } from "../src/icu-syntax-preservation/index";
 
 type TargetField = "french" | "german";
@@ -12,12 +15,18 @@ type MasterTranslationEntry = {
 
 type MasterTranslations = Record<string, MasterTranslationEntry>;
 
+type ExtractedTranslationEntry = {
+  sk?: string | null;
+  translatedContent?: string | null;
+};
+
 type InvalidEntry = {
   id: string;
-  field: TargetField;
+  field: string;
+  locale: string | null;
   description: unknown;
-  source: string;
-  target: string;
+  source?: string;
+  value: string;
   issues: IcuSyntaxPreservationIssue[];
 };
 
@@ -30,8 +39,7 @@ const filePath = args.filePath ?? DEFAULT_FILE;
 const maxReports = args.maxReports ?? DEFAULT_MAX_REPORTS;
 
 const rawTranslations = readJsonFile(filePath);
-const translations = assertMasterTranslations(rawTranslations, filePath);
-const result = evaluateTranslations(translations);
+const result = evaluateIcuSyntaxFile(rawTranslations, filePath);
 
 printSummary(filePath, result, maxReports);
 
@@ -39,7 +47,15 @@ if (result.invalidEntries.length > 0) {
   process.exitCode = 1;
 }
 
-function evaluateTranslations(translations: MasterTranslations) {
+function evaluateIcuSyntaxFile(value: unknown, path: string) {
+  if (Array.isArray(value)) {
+    return evaluateExtractedTranslations(value, path);
+  }
+
+  return evaluateStaticTranslations(assertMasterTranslations(value, path));
+}
+
+function evaluateStaticTranslations(translations: MasterTranslations) {
   const invalidEntries: InvalidEntry[] = [];
   let checkedTranslations = 0;
   let skippedTranslations = 0;
@@ -68,9 +84,10 @@ function evaluateTranslations(translations: MasterTranslations) {
         invalidEntries.push({
           id,
           field,
+          locale: field,
           description: entry.description ?? null,
           source,
-          target,
+          value: target,
           issues: validation.issues,
         });
       }
@@ -78,9 +95,61 @@ function evaluateTranslations(translations: MasterTranslations) {
   }
 
   return {
+    mode: "source-preservation",
     entries: Object.keys(translations).length,
     checkedTranslations,
     skippedTranslations,
+    invalidEntries,
+  };
+}
+
+function evaluateExtractedTranslations(value: unknown[], path: string) {
+  const invalidEntries: InvalidEntry[] = [];
+  let checkedTranslations = 0;
+  let skippedTranslations = 0;
+  let parseErrors = 0;
+
+  for (const [index, entry] of value.entries()) {
+    if (!entry || typeof entry !== "object") {
+      throw new Error(`${path}[${index}] must be an object`);
+    }
+
+    const translation = entry as ExtractedTranslationEntry;
+
+    if (typeof translation.translatedContent !== "string") {
+      skippedTranslations += 1;
+      continue;
+    }
+
+    checkedTranslations += 1;
+
+    const validation = validateIcuPluralSelectors(translation.translatedContent);
+    const pluralSelectorIssues = validation.issues.filter(
+      (issue) => issue.code === "invalid_plural_selector",
+    );
+
+    if (validation.issues.some((issue) => issue.code === "parse_error")) {
+      parseErrors += 1;
+    }
+
+    if (pluralSelectorIssues.length > 0) {
+      invalidEntries.push({
+        id: String(index),
+        field: "translatedContent",
+        locale: typeof translation.sk === "string" ? translation.sk : null,
+        value: translation.translatedContent,
+        description: null,
+        issues: pluralSelectorIssues,
+      });
+    }
+  }
+
+  return {
+    mode: "plural-selector-parse-only",
+    entries: value.length,
+    checkedTranslations,
+    skippedTranslations,
+    parseErrors,
     invalidEntries,
   };
 }
@@ -139,14 +208,18 @@ function parseArgs(args: string[]): {
 
 function printSummary(
   filePath: string,
-  result: ReturnType<typeof evaluateTranslations>,
+  result: ReturnType<typeof evaluateIcuSyntaxFile>,
   maxReports: number,
 ): void {
   console.log("ICU syntax preservation");
   console.log(`File: ${filePath}`);
+  console.log(`Mode: ${result.mode}`);
   console.log(`Entries: ${result.entries}`);
   console.log(`Checked translations: ${result.checkedTranslations}`);
   console.log(`Skipped translations: ${result.skippedTranslations}`);
+  if ("parseErrors" in result) {
+    console.log(`Parse errors skipped: ${result.parseErrors}`);
+  }
   console.log(`Invalid entries: ${result.invalidEntries.length}`);
 
   if (result.invalidEntries.length === 0) {

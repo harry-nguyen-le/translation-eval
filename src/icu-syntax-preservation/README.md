@@ -29,3 +29,9 @@ Run the proof of concept against `translation-data/cp-static-translations.json`:
 ```sh
 bun i18n:icu-syntax-preservation
 ```
+
+Run plural selector validation only against extracted target strings:
+
+```sh
+bun i18n:icu-syntax-preservation translation-data/extracted-translations.json
+```

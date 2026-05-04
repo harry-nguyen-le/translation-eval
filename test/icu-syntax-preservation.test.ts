@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertIcuSyntaxPreservation,
   formatIcuSyntaxPreservationIssues,
+  validateIcuPluralSelectors,
   validateIcuSyntaxPreservation,
 } from "../src/icu-syntax-preservation/index";
 
@@ -163,6 +164,32 @@ describe("validateIcuSyntaxPreservation", () => {
         side: "target",
       }),
     );
+  });
+});
+
+describe("validateIcuPluralSelectors", () => {
+  it("checks target plural selectors without requiring a source message", () => {
+    const result = validateIcuPluralSelectors("{count, plural, un {# fichier} other {# fichiers}}");
+
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        code: "invalid_plural_selector",
+        side: "target",
+        argumentName: "count",
+        selector: "un",
+      }),
+    ]);
+  });
+
+  it("does not report select selector keys in target-only mode", () => {
+    const result = validateIcuPluralSelectors(
+      "{gender, select, homme {Il} femme {Elle} other {Iel}}",
+    );
+
+    expect(result).toEqual({
+      isValid: true,
+      issues: [],
+    });
   });
 });
 

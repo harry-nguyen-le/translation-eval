@@ -42,6 +42,12 @@ Run the ICU syntax preservation proof of concept against `translation-data/cp-st
 bun i18n:icu-syntax-preservation
 ```
 
+Run ICU plural selector validation against extracted translations:
+
+```sh
+bun i18n:icu-syntax-preservation translation-data/extracted-translations.json
+```
+
 Run the escape character preservation proof of concept against `translation-data/cp-static-translations.json`:
 
 ```sh

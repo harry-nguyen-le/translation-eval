@@ -113,6 +113,27 @@ export function validateIcuSyntaxPreservation(
   };
 }
 
+export function validateIcuPluralSelectors(
+  message: string,
+  side: Side = "target",
+): IcuSyntaxPreservationResult {
+  const ast = parseMessage(message, side);
+
+  if (!ast.ok) {
+    return {
+      isValid: false,
+      issues: [ast.issue],
+    };
+  }
+
+  const issues = validatePluralSelectors(ast.ast, side);
+
+  return {
+    isValid: issues.length === 0,
+    issues,
+  };
+}
+
 export function assertIcuSyntaxPreservation(source: string, target: string): void {
   const result = validateIcuSyntaxPreservation(source, target);
 
