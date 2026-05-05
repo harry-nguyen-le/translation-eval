@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 
 import { validateHtmlLayoutPreservation } from "../src/html-layout-preservation/index";
-import type { HtmlLayoutPreservationIssue } from "../src/html-layout-preservation/index";
 
 type TargetField = "french" | "german";
 
@@ -18,7 +17,7 @@ type InvalidEntry = {
   description: unknown;
   source: string;
   target: string;
-  issues: HtmlLayoutPreservationIssue[];
+  issues: ReturnType<typeof validateHtmlLayoutPreservation>["issues"];
 };
 
 const TARGET_FIELDS = ["french", "german"] as const satisfies readonly TargetField[];

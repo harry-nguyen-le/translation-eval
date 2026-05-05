@@ -1,5 +1,5 @@
 import { parseDocument } from "htmlparser2";
-import { isTag, type ChildNode, type Element } from "domhandler";
+import { isTag, type ChildNode } from "domhandler";
 import htmlTags, { voidHtmlTags } from "html-tags";
 import { characterEntities } from "character-entities";
 
@@ -8,9 +8,6 @@ const setOf = (values: string): Set<string> => new Set(values.split(" "));
 const NON_LAYOUT_TAGS = setOf(
   "a abbr area audio b base bdi bdo button canvas cite code data datalist del dfn em embed head i iframe img input ins kbd label link map mark math meta meter object optgroup option output picture progress q rp rt ruby s samp script select selectedcontent slot small source span strong style sub sup svg template textarea time title track u var video wbr",
 );
-const FUNCTIONAL_INLINE_TAGS = setOf(
-  "a audio button embed iframe img input label link object option picture select source textarea video",
-);
 const LAYOUT_TAGS: Set<string> = new Set(htmlTags.filter((tag) => !NON_LAYOUT_TAGS.has(tag)));
 const VOID_TAGS: Set<string> = new Set(voidHtmlTags);
 
@@ -18,20 +15,16 @@ const RAW_TAG_PATTERN = /<\/?\s*([A-Za-z][\w:.-]*)(?:\s+(?:"[^"]*"|'[^']*'|[^'"<
 
 const NAMED_REFERENCE_PATTERN = /&([A-Za-z][A-Za-z0-9]+);?/g;
 const NUMERIC_REFERENCE_PATTERN = /&#(?:x[0-9a-fA-F]+|\d+);?/g;
+// Literal special characters are matched here; entity forms like &nbsp; and &#160; are decoded first.
 const LITERAL_SPECIAL_CHARACTER_PATTERN =
   /[\u00a0\u00ad\u2000-\u200f\u2028-\u202f\u205f\u2060-\u206f\u3000\ufeff]/g;
 
-export type LayoutElement = {
+type LayoutElement = {
   tag: string;
   children: LayoutElement[];
 };
 
-export type FunctionalElement = {
-  tag: string;
-  attributes: Record<string, string>;
-};
-
-export type HtmlLayoutPreservationIssue =
+type HtmlLayoutPreservationIssue =
   | {
       code: "markup_parse_error";
       side: "source" | "target";
@@ -43,46 +36,53 @@ export type HtmlLayoutPreservationIssue =
       targetLayout: LayoutElement[];
     }
   | {
-      code: "functional_inline_inventory_changed";
-      sourceElements: FunctionalElement[];
-      targetElements: FunctionalElement[];
-    }
-  | {
       code: "special_character_added";
       sourceSpecialCharacters: string[];
       targetSpecialCharacters: string[];
       addedSpecialCharacters: string[];
     };
 
-export type HtmlLayoutPreservationResult = {
+type HtmlLayoutPreservationResult = {
   isValid: boolean;
   sourceLayout: LayoutElement[];
   targetLayout: LayoutElement[];
-  sourceFunctionalElements: FunctionalElement[];
-  targetFunctionalElements: FunctionalElement[];
   issues: HtmlLayoutPreservationIssue[];
 };
-
-type MarkupAnalysis = {
-  balance: { ok: true } | { ok: false; message: string };
-  layout: LayoutElement[];
-  functionalElements: FunctionalElement[];
-  specialCharacters: string[];
-};
-
-type MarkupStructure = Pick<MarkupAnalysis, "layout" | "functionalElements">;
 
 export function validateHtmlLayoutPreservation(
   source: string,
   target: string,
 ): HtmlLayoutPreservationResult {
-  const sourceAnalysis = analyzeMarkup(source);
-  const targetAnalysis = analyzeMarkup(target);
-  const addedSpecialCharacters = multisetDifference(
-    targetAnalysis.specialCharacters,
-    sourceAnalysis.specialCharacters,
-  );
+  const sourceAnalysis = {
+    balance: validateMarkupBalance(source),
+    layout: collectLayout(parseDocument(source, parserOptions).children),
+    specialCharacters: collectSpecialCharacters(source),
+  };
+  const targetAnalysis = {
+    balance: validateMarkupBalance(target),
+    layout: collectLayout(parseDocument(target, parserOptions).children),
+    specialCharacters: collectSpecialCharacters(target),
+  };
+  const remainingSourceSpecialCharacters = new Map<string, number>();
   const issues: HtmlLayoutPreservationIssue[] = [];
+
+  for (const value of sourceAnalysis.specialCharacters) {
+    remainingSourceSpecialCharacters.set(
+      value,
+      (remainingSourceSpecialCharacters.get(value) ?? 0) + 1,
+    );
+  }
+
+  const addedSpecialCharacters = targetAnalysis.specialCharacters.filter((value) => {
+    const count = remainingSourceSpecialCharacters.get(value) ?? 0;
+
+    if (count === 0) {
+      return true;
+    }
+
+    remainingSourceSpecialCharacters.set(value, count - 1);
+    return false;
+  });
 
   if (!sourceAnalysis.balance.ok) {
     issues.push({
@@ -100,24 +100,11 @@ export function validateHtmlLayoutPreservation(
     });
   }
 
-  if (!sameJson(sourceAnalysis.layout, targetAnalysis.layout)) {
+  if (JSON.stringify(sourceAnalysis.layout) !== JSON.stringify(targetAnalysis.layout)) {
     issues.push({
       code: "layout_structure_changed",
       sourceLayout: sourceAnalysis.layout,
       targetLayout: targetAnalysis.layout,
-    });
-  }
-
-  if (
-    !sameJson(
-      sortFunctionalElements(sourceAnalysis.functionalElements),
-      sortFunctionalElements(targetAnalysis.functionalElements),
-    )
-  ) {
-    issues.push({
-      code: "functional_inline_inventory_changed",
-      sourceElements: sourceAnalysis.functionalElements,
-      targetElements: targetAnalysis.functionalElements,
     });
   }
 
@@ -134,27 +121,30 @@ export function validateHtmlLayoutPreservation(
     isValid: issues.length === 0,
     sourceLayout: sourceAnalysis.layout,
     targetLayout: targetAnalysis.layout,
-    sourceFunctionalElements: sourceAnalysis.functionalElements,
-    targetFunctionalElements: targetAnalysis.functionalElements,
     issues,
   };
 }
 
-export function extractHtmlLayout(input: string): LayoutElement[] {
-  return collectStructure(parseDocument(input, parserOptions).children).layout;
-}
+function collectSpecialCharacters(input: string): string[] {
+  const named = Array.from(input.matchAll(NAMED_REFERENCE_PATTERN), ([, name = ""]) => {
+    const value = characterEntities[name] ?? characterEntities[name.toLowerCase()];
 
-export function collectHtmlFunctionalElements(input: string): FunctionalElement[] {
-  return collectStructure(parseDocument(input, parserOptions).children).functionalElements;
-}
+    return value
+      ? Array.from(value).flatMap((char) => {
+          const codePoint = char.codePointAt(0) ?? 0;
+          return isSpecialCodePoint(codePoint) ? [formatCodePoint(codePoint)] : [];
+        })
+      : [];
+  }).flat();
+  const numeric = Array.from(input.matchAll(NUMERIC_REFERENCE_PATTERN), ([reference]) => {
+    const body = reference.replace(/^&#/, "").replace(/;$/, "");
+    const radix = body.toLowerCase().startsWith("x") ? 16 : 10;
+    const codePoint = Number.parseInt(radix === 16 ? body.slice(1) : body, radix);
 
-export function collectSpecialCharacters(input: string): string[] {
-  const named = Array.from(input.matchAll(NAMED_REFERENCE_PATTERN), (match) =>
-    specialCodePointsForEntity(match[1] ?? ""),
-  ).flat();
-  const numeric = Array.from(input.matchAll(NUMERIC_REFERENCE_PATTERN), (match) =>
-    parseSpecialNumericReference(match[0]),
-  ).filter((value): value is string => value !== undefined);
+    return Number.isFinite(codePoint) && isSpecialCodePoint(codePoint)
+      ? formatCodePoint(codePoint)
+      : undefined;
+  }).filter((value): value is string => value !== undefined);
   const literal = Array.from(input.matchAll(LITERAL_SPECIAL_CHARACTER_PATTERN), (match) =>
     formatCodePoint(match[0].codePointAt(0) ?? 0),
   );
@@ -169,21 +159,7 @@ const parserOptions = {
   xmlMode: false,
 };
 
-function analyzeMarkup(input: string): MarkupAnalysis {
-  const structure = collectStructure(parseDocument(input, parserOptions).children);
-
-  return {
-    balance: validateMarkupBalance(input),
-    ...structure,
-    specialCharacters: collectSpecialCharacters(input),
-  };
-}
-
-function collectStructure(
-  nodes: readonly ChildNode[],
-  layout: LayoutElement[] = [],
-  functionalElements: FunctionalElement[] = [],
-): MarkupStructure {
+function collectLayout(nodes: readonly ChildNode[], layout: LayoutElement[] = []): LayoutElement[] {
   for (const node of nodes) {
     if (!isTag(node)) {
       continue;
@@ -191,33 +167,18 @@ function collectStructure(
 
     const tag = node.name.toLowerCase();
 
-    if (FUNCTIONAL_INLINE_TAGS.has(tag)) {
-      functionalElements.push({
-        tag,
-        attributes: normalizeAttributes(node),
-      });
-    }
-
     if (!LAYOUT_TAGS.has(tag)) {
-      collectStructure(node.children, layout, functionalElements);
+      collectLayout(node.children, layout);
       continue;
     }
 
     const element = { tag, children: [] };
 
     layout.push(element);
-    collectStructure(node.children, element.children, functionalElements);
+    collectLayout(node.children, element.children);
   }
 
-  return { layout, functionalElements };
-}
-
-function normalizeAttributes(node: Element): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(node.attribs)
-      .map(([name, value]) => [name.toLowerCase(), value] as const)
-      .sort(([left], [right]) => left.localeCompare(right)),
-  );
+  return layout;
 }
 
 function validateMarkupBalance(input: string): { ok: true } | { ok: false; message: string } {
@@ -245,7 +206,13 @@ function validateMarkupBalance(input: string): { ok: true } | { ok: false; messa
       continue;
     }
 
-    if (/\/\s*>$/.test(rawTag) || (VOID_TAGS.has(tag) && !hasClosingTagAhead(input, tag))) {
+    if (
+      /\/\s*>$/.test(rawTag) ||
+      (VOID_TAGS.has(tag) &&
+        !new RegExp(`</\\s*${tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*>`, "i").test(
+          input.slice(RAW_TAG_PATTERN.lastIndex),
+        ))
+    ) {
       continue;
     }
 
@@ -260,35 +227,6 @@ function validateMarkupBalance(input: string): { ok: true } | { ok: false; messa
   }
 
   return { ok: true };
-}
-
-function hasClosingTagAhead(input: string, tag: string): boolean {
-  const pattern = new RegExp(`</\\s*${escapeRegExp(tag)}\\s*>`, "i");
-  return pattern.test(input.slice(RAW_TAG_PATTERN.lastIndex));
-}
-
-function specialCodePointsForEntity(name: string): string[] {
-  const value = characterEntities[name] ?? characterEntities[name.toLowerCase()];
-
-  if (!value) {
-    return [];
-  }
-
-  return Array.from(value)
-    .map((char) => char.codePointAt(0) ?? 0)
-    .filter(isSpecialCodePoint)
-    .map(formatCodePoint);
-}
-
-function parseSpecialNumericReference(reference: string): string | undefined {
-  const body = reference.replace(/^&#/, "").replace(/;$/, "");
-  const radix = body.toLowerCase().startsWith("x") ? 16 : 10;
-  const numeric = radix === 16 ? body.slice(1) : body;
-  const codePoint = Number.parseInt(numeric, radix);
-
-  return Number.isFinite(codePoint) && isSpecialCodePoint(codePoint)
-    ? formatCodePoint(codePoint)
-    : undefined;
 }
 
 function isSpecialCodePoint(codePoint: number): boolean {
@@ -306,41 +244,4 @@ function isSpecialCodePoint(codePoint: number): boolean {
 
 function formatCodePoint(codePoint: number): string {
   return `U+${codePoint.toString(16).toUpperCase().padStart(4, "0")}`;
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function sortFunctionalElements(elements: readonly FunctionalElement[]): FunctionalElement[] {
-  return [...elements].sort((left, right) =>
-    JSON.stringify(left).localeCompare(JSON.stringify(right)),
-  );
-}
-
-function multisetDifference(source: readonly string[], target: readonly string[]): string[] {
-  const remaining = new Map<string, number>();
-
-  for (const value of target) {
-    remaining.set(value, (remaining.get(value) ?? 0) + 1);
-  }
-
-  const missing: string[] = [];
-
-  for (const value of source) {
-    const count = remaining.get(value) ?? 0;
-
-    if (count > 0) {
-      remaining.set(value, count - 1);
-      continue;
-    }
-
-    missing.push(value);
-  }
-
-  return missing;
-}
-
-function sameJson(left: unknown, right: unknown): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
 }

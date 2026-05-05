@@ -1,26 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  collectHtmlFunctionalElements,
-  collectSpecialCharacters,
-  extractHtmlLayout,
-  validateHtmlLayoutPreservation,
-} from "../src/html-layout-preservation/index";
+import { validateHtmlLayoutPreservation } from "../src/html-layout-preservation/index";
 
-describe("extractHtmlLayout", () => {
+describe("validateHtmlLayoutPreservation", () => {
   it("extracts only block/layout structure", () => {
-    expect(extractHtmlLayout("<p>Room A <strong>and</strong> Room B</p>")).toEqual([
-      {
-        tag: "p",
-        children: [],
-      },
-    ]);
+    const result = validateHtmlLayoutPreservation(
+      "<p>Room A <strong>and</strong> Room B</p>",
+      "<p>Room A and Room B</p>",
+    );
+
+    expect(result.sourceLayout).toEqual([{ tag: "p", children: [] }]);
+    expect(result.targetLayout).toEqual([{ tag: "p", children: [] }]);
+    expect(result.isValid).toBe(true);
   });
 
   it("keeps nested layout structure through ignored inline wrappers", () => {
-    expect(
-      extractHtmlLayout("<span><section><span><ul><li>One</li></ul></span></section></span>"),
-    ).toEqual([
+    const result = validateHtmlLayoutPreservation(
+      "<span><section><span><ul><li>One</li></ul></span></section></span>",
+      "<section><ul><li>One</li></ul></section>",
+    );
+
+    expect(result.sourceLayout).toEqual([
       {
         tag: "section",
         children: [
@@ -36,36 +36,10 @@ describe("extractHtmlLayout", () => {
         ],
       },
     ]);
+    expect(result.targetLayout).toEqual(result.sourceLayout);
+    expect(result.isValid).toBe(true);
   });
-});
 
-describe("collectHtmlFunctionalElements", () => {
-  it("collects functional inline elements and attributes", () => {
-    expect(
-      collectHtmlFunctionalElements('<p>Read <a href="/guide" data-id="1">guide</a></p>'),
-    ).toEqual([
-      {
-        tag: "a",
-        attributes: {
-          "data-id": "1",
-          href: "/guide",
-        },
-      },
-    ]);
-  });
-});
-
-describe("collectSpecialCharacters", () => {
-  it("normalizes special entities and literal characters to code point names", () => {
-    expect(collectSpecialCharacters("A&nbsp;B &#x202F; C\u200B")).toEqual([
-      "U+00A0",
-      "U+202F",
-      "U+200B",
-    ]);
-  });
-});
-
-describe("validateHtmlLayoutPreservation", () => {
   it("allows stylistic inline formatting to disappear when layout is preserved", () => {
     const result = validateHtmlLayoutPreservation(
       "<p>Room A <strong>and</strong> Room B</p>",
@@ -76,19 +50,19 @@ describe("validateHtmlLayoutPreservation", () => {
     expect(result.issues).toEqual([]);
   });
 
-  it("allows functional inline elements to move when their inventory is preserved", () => {
+  it("ignores inline element changes when layout is preserved", () => {
     const result = validateHtmlLayoutPreservation(
       '<p>Read the <a href="/guide">installation guide</a> before continuing.</p>',
-      '<p><a href="/guide">Guide d’installation</a> a lire avant de continuer.</p>',
+      "<p>Guide d’installation a lire avant de continuer.</p>",
     );
 
     expect(result.isValid).toBe(true);
   });
 
-  it("treats closed rich-text link tags as functional inline elements", () => {
+  it("ignores closed rich-text link tags", () => {
     const result = validateHtmlLayoutPreservation(
       "Read our full <link>Terms & Conditions</link>",
-      "Lisez nos <link>conditions generales</link> completes",
+      "Lisez nos conditions generales completes",
     );
 
     expect(result.isValid).toBe(true);
@@ -107,30 +81,17 @@ describe("validateHtmlLayoutPreservation", () => {
     );
   });
 
-  it("rejects changed functional inline element inventory", () => {
-    const result = validateHtmlLayoutPreservation(
-      '<p>Read <a href="/terms">terms</a></p>',
-      '<p>Lisez <a href="/conditions">les conditions</a></p>',
-    );
-
-    expect(result.issues).toContainEqual(
-      expect.objectContaining({
-        code: "functional_inline_inventory_changed",
-      }),
-    );
-  });
-
   it("rejects newly introduced special spaces and entities", () => {
     const result = validateHtmlLayoutPreservation(
       "<p>Hello world</p>",
-      "<p>Bonjour&nbsp;le monde</p>",
+      "<p>Bonjour&nbsp;le monde &#x202F; C\u200B</p>",
     );
 
     expect(result.issues).toContainEqual({
       code: "special_character_added",
       sourceSpecialCharacters: [],
-      targetSpecialCharacters: ["U+00A0"],
-      addedSpecialCharacters: ["U+00A0"],
+      targetSpecialCharacters: ["U+00A0", "U+202F", "U+200B"],
+      addedSpecialCharacters: ["U+00A0", "U+202F", "U+200B"],
     });
   });
 
