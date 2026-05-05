@@ -6,6 +6,7 @@ This package contains deterministic validation checks for translated UI strings:
 
 - [Mixed script detection](src/mixed-script-detection/README.md) detects unexpected Unicode scripts in user-visible ICU text.
 - [Escape character preservation](src/escape-character-preservation/README.md) checks that translated strings preserve escape sequences.
+- [HTML layout preservation](src/html-layout-preservation/README.md) checks post-translation HTML/XML-like layout while allowing stylistic inline formatting to change.
 - [ICU syntax preservation](src/icu-syntax-preservation/README.md) checks that translated ICU messages preserve source syntax and selector contracts.
 - [Markdown validation](src/markdown-preservation/README.md) parses translated Markdown with `mdast-util-from-markdown`.
 - [URL preservation](src/url-preservation/README.md) checks that translated content preserves source URLs exactly.
@@ -52,6 +53,12 @@ Run the escape character preservation proof of concept against `translation-data
 
 ```sh
 bun i18n:escape-character-preservation
+```
+
+Run the HTML layout preservation proof of concept against `translation-data/cp-static-translations.json`:
+
+```sh
+bun i18n:html-layout-preservation
 ```
 
 Run Markdown validation against `dummy-markdown.json`:

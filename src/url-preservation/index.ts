@@ -1,5 +1,10 @@
 const URL_PATTERN = /\b(?:(?:https?|ftp):\/\/|mailto:|tel:|www\.)[^\s<>"'`]+/gi;
 const TRAILING_PUNCTUATION_PATTERN = /[.,;:!?]+$/;
+const WRAPPING_DELIMITER_PAIRS = [
+  ["(", ")"],
+  ["[", "]"],
+  ["{", "}"],
+] as const;
 
 export type UrlPreservationIssue =
   | {
@@ -70,11 +75,8 @@ export function assertUrlPreservation(source: string, target: string): void {
 function trimUrl(url: string): string {
   let trimmed = url.replace(TRAILING_PUNCTUATION_PATTERN, "");
 
-  for (const [open, close] of [
-    ["(", ")"],
-    ["[", "]"],
-    ["{", "}"],
-  ] as const) {
+  // URL_PATTERN can capture surrounding prose delimiters; keep balanced delimiters inside the URL.
+  for (const [open, close] of WRAPPING_DELIMITER_PAIRS) {
     while (trimmed.endsWith(close) && count(trimmed, open) < count(trimmed, close)) {
       trimmed = trimmed.slice(0, -1);
     }

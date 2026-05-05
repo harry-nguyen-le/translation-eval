@@ -20,6 +20,11 @@ describe("extractUrls", () => {
       "https://example.com/search?q=(spa)",
     ]);
   });
+
+  it("trims unbalanced closing delimiters around URLs", () => {
+    expect(extractUrls("See (https://example.com/help).")).toEqual(["https://example.com/help"]);
+    expect(extractUrls("See [https://example.com/help].")).toEqual(["https://example.com/help"]);
+  });
 });
 
 describe("validateUrlPreservation", () => {

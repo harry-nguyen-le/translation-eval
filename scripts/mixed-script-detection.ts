@@ -1,10 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import {
-  checkIcuTranslationForMixedScripts,
-  checkTextForMixedScripts,
-  type ScriptIssue,
-} from "../src/mixed-script-detection/index";
+import { checkMixedScripts, type ScriptIssue } from "../src/mixed-script-detection/index";
 
 type TranslationField = keyof typeof TRANSLATION_LOCALES;
 
@@ -247,7 +243,7 @@ function checkMessageForMixedScripts(
   try {
     return {
       ok: true,
-      issues: checkIcuTranslationForMixedScripts(message, locale).issues,
+      issues: checkMixedScripts(message, locale).issues,
     };
   } catch (error) {
     const jsonStrings = collectJsonStringValues(message);
@@ -255,7 +251,7 @@ function checkMessageForMixedScripts(
     if (jsonStrings.length > 0) {
       return {
         ok: true,
-        issues: checkTextForMixedScripts(jsonStrings.join("\n"), locale).issues,
+        issues: checkMixedScripts(jsonStrings.join("\n"), locale, { inputFormat: "text" }).issues,
       };
     }
 

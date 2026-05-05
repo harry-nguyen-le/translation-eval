@@ -16,9 +16,9 @@ Exact allowed terms can be supplied for product names, brands, glossary terms, o
 ## API
 
 ```ts
-import { checkIcuTranslationForMixedScripts } from "translation-eval";
+import { checkMixedScripts } from "translation-eval";
 
-const result = checkIcuTranslationForMixedScripts("{userName} reset your Pаypal password", "en");
+const result = checkMixedScripts("{userName} reset your Pаypal password", "en");
 
 console.log(result.hasUnexpectedScript);
 console.log(result.issues);
@@ -27,14 +27,16 @@ console.log(result.issues);
 With exact exceptions:
 
 ```ts
-import { checkIcuTranslationForMixedScripts } from "translation-eval";
+import { checkMixedScripts } from "translation-eval";
 
-const result = checkIcuTranslationForMixedScripts("Email from PayPal sent", "en", {
+const result = checkMixedScripts("Email from PayPal sent", "en", {
   allowedTerms: ["PayPal"],
 });
 
 console.log(result.hasUnexpectedScript);
 ```
+
+For plain text rather than ICU MessageFormat input, pass `inputFormat: "text"`.
 
 ## CLI
 

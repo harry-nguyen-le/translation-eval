@@ -37,6 +37,7 @@ export type ScriptIssue = {
 export type MixedScriptCheckOptions = {
   allowedPatterns?: Iterable<RegExp>;
   allowedTerms?: Iterable<string>;
+  inputFormat?: "icu" | "text";
 };
 
 export type MixedScriptCheckResult = {
@@ -47,7 +48,7 @@ export type MixedScriptCheckResult = {
   issues: ScriptIssue[];
 };
 
-export function expectedUnicodeScriptsForLocale(locale: string): string[] {
+function expectedUnicodeScriptsForLocale(locale: string): string[] {
   try {
     return [new Intl.Locale(locale).maximize().script ?? DEFAULT_SCRIPT];
   } catch {
@@ -55,48 +56,16 @@ export function expectedUnicodeScriptsForLocale(locale: string): string[] {
   }
 }
 
-export function extractVisibleSegments(message: string): VisibleSegment[] {
-  if (typeof message !== "string") {
-    throw new TypeError("message must be a string");
-  }
-
-  const segments: VisibleSegment[] = [];
-  collectVisibleSegments(
-    parse(message, { captureLocation: true, requiresOtherClause: true }),
-    "$",
-    segments,
-  );
-  return segments;
-}
-
-export function checkIcuTranslationForMixedScripts(
+export function checkMixedScripts(
   message: string,
   targetLocale: string,
   options: MixedScriptCheckOptions = {},
 ): MixedScriptCheckResult {
   const expectedScripts = expectedUnicodeScriptsForLocale(targetLocale);
-  const visibleSegments = extractVisibleSegments(message);
-  const issues = visibleSegments.flatMap((segment) =>
-    checkSegment(segment, expectedScripts, options),
-  );
-
-  return {
-    targetLocale,
-    expectedScripts,
-    visibleSegments,
-    hasUnexpectedScript: issues.length > 0,
-    issues,
-  };
-}
-
-export function checkTextForMixedScripts(
-  text: string,
-  targetLocale: string,
-  options: MixedScriptCheckOptions = {},
-): MixedScriptCheckResult {
-  const expectedScripts = expectedUnicodeScriptsForLocale(targetLocale);
   const visibleSegments =
-    text.trim().length > 0 ? [{ text, path: "$", start: 0, end: text.length }] : [];
+    options.inputFormat === "text"
+      ? extractTextSegment(message)
+      : extractIcuVisibleSegments(message);
   const issues = visibleSegments.flatMap((segment) =>
     checkSegment(segment, expectedScripts, options),
   );
@@ -108,14 +77,6 @@ export function checkTextForMixedScripts(
     hasUnexpectedScript: issues.length > 0,
     issues,
   };
-}
-
-export function detectedScriptForCharacter(char: string): DetectedScript {
-  return NEUTRAL_SCRIPT_PATTERN.test(char)
-    ? "Neutral"
-    : LATIN_SCRIPT_PATTERN.test(char)
-      ? "Latin"
-      : "NonLatin";
 }
 
 function checkSegment(
@@ -152,6 +113,14 @@ function checkSegment(
   }
 
   return issues;
+}
+
+function detectedScriptForCharacter(char: string): DetectedScript {
+  return NEUTRAL_SCRIPT_PATTERN.test(char)
+    ? "Neutral"
+    : LATIN_SCRIPT_PATTERN.test(char)
+      ? "Latin"
+      : "NonLatin";
 }
 
 function matchesExpectedScripts(char: string, expectedScripts: readonly string[]): boolean {
@@ -229,6 +198,24 @@ function mergeRanges(ranges: Range[]): Range[] {
 
 function isIndexAllowed(index: number, ranges: readonly Range[]): boolean {
   return ranges.some(([start, end]) => index >= start && index < end);
+}
+
+function extractTextSegment(text: string): VisibleSegment[] {
+  return text.trim().length > 0 ? [{ text, path: "$", start: 0, end: text.length }] : [];
+}
+
+function extractIcuVisibleSegments(message: string): VisibleSegment[] {
+  if (typeof message !== "string") {
+    throw new TypeError("message must be a string");
+  }
+
+  const segments: VisibleSegment[] = [];
+  collectVisibleSegments(
+    parse(message, { captureLocation: true, requiresOtherClause: true }),
+    "$",
+    segments,
+  );
+  return segments;
 }
 
 function collectVisibleSegments(

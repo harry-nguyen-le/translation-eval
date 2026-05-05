@@ -15,6 +15,7 @@
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "i18n:escape-character-preservation": "bun run scripts/escape-character-preservation.ts",
+    "i18n:html-layout-preservation": "bun run scripts/html-layout-preservation.ts",
     "i18n:icu-syntax-preservation": "bun run scripts/icu-syntax-preservation.ts",
     "i18n:markdown-preservation": "bun run scripts/markdown-preservation.ts",
     "i18n:mixed-script-detection": "bun run scripts/mixed-script-detection.ts",
@@ -26,6 +27,9 @@
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.5",
+    "character-entities": "^2.0.2",
+    "html-tags": "^5.1.0",
+    "htmlparser2": "^12.0.0",
     "mdast-util-from-markdown": "^2.0.3"
   },
   "devDependencies": {

@@ -1,32 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  checkIcuTranslationForMixedScripts,
-  detectedScriptForCharacter,
-  expectedUnicodeScriptsForLocale,
-  extractVisibleSegments,
-} from "../src/mixed-script-detection/index";
+import { checkMixedScripts } from "../src/mixed-script-detection/index";
 
-describe("expectedUnicodeScriptsForLocale", () => {
+describe("checkMixedScripts", () => {
   it("uses the likely Unicode script for the target locale", () => {
-    expect(expectedUnicodeScriptsForLocale("de-DE")).toEqual(["Latn"]);
-    expect(expectedUnicodeScriptsForLocale("ar-EG")).toEqual(["Arab"]);
+    expect(checkMixedScripts("Hallo", "de-DE").expectedScripts).toEqual(["Latn"]);
+    expect(checkMixedScripts("مرحبا", "ar-EG").expectedScripts).toEqual(["Arab"]);
   });
-});
 
-describe("extractVisibleSegments", () => {
   it("ignores placeholders and simple format arguments", () => {
     expect(
-      extractVisibleSegments("{userName} reset {count, number} files").map(
+      checkMixedScripts("{userName} reset {count, number} files", "en").visibleSegments.map(
         (segment) => segment.text,
       ),
     ).toEqual([" reset ", " files"]);
   });
 
   it("walks plural and select option bodies", () => {
-    const segments = extractVisibleSegments(
+    const segments = checkMixedScripts(
       "{count, plural, one {{gender, select, male {He has one file} other {They have one file}}} other {# files deleted}}",
-    );
+      "en",
+    ).visibleSegments;
 
     expect(segments.map((segment) => segment.text)).toEqual([
       "He has one file",
@@ -38,17 +32,14 @@ describe("extractVisibleSegments", () => {
 
   it("strips rich-text tag names from visible literals", () => {
     expect(
-      extractVisibleSegments("<link>Read more</link> now").map((segment) => segment.text),
+      checkMixedScripts("<link>Read more</link> now", "en").visibleSegments.map(
+        (segment) => segment.text,
+      ),
     ).toEqual(["Read more now"]);
   });
-});
 
-describe("checkIcuTranslationForMixedScripts", () => {
   it("reports a Cyrillic homoglyph in English visible text", () => {
-    const result = checkIcuTranslationForMixedScripts(
-      "{userName} reset your Pаypal password",
-      "en",
-    );
+    const result = checkMixedScripts("{userName} reset your Pаypal password", "en");
 
     expect(result.hasUnexpectedScript).toBe(true);
     expect(
@@ -67,7 +58,7 @@ describe("checkIcuTranslationForMixedScripts", () => {
   });
 
   it("does not report ICU syntax", () => {
-    const result = checkIcuTranslationForMixedScripts(
+    const result = checkMixedScripts(
       "{count, plural, one {# file deleted} other {# files deleted}}",
       "en",
     );
@@ -76,13 +67,13 @@ describe("checkIcuTranslationForMixedScripts", () => {
   });
 
   it("allows exact exception terms without allowing spoofed variants", () => {
-    const valid = checkIcuTranslationForMixedScripts("Email from PayPal sent", "en", {
+    const valid = checkMixedScripts("Email from PayPal sent", "en", {
       allowedTerms: ["PayPal"],
     });
 
     expect(valid.hasUnexpectedScript).toBe(false);
 
-    const spoofed = checkIcuTranslationForMixedScripts("Email from PаyPal sent", "en", {
+    const spoofed = checkMixedScripts("Email from PаyPal sent", "en", {
       allowedTerms: ["PayPal"],
     });
 
@@ -91,42 +82,43 @@ describe("checkIcuTranslationForMixedScripts", () => {
   });
 
   it("uses the locale's likely script", () => {
-    expect(
-      checkIcuTranslationForMixedScripts("Лозинка је промењена", "sr").hasUnexpectedScript,
-    ).toBe(false);
-    expect(
-      checkIcuTranslationForMixedScripts("Lozinka je promenjena", "sr").hasUnexpectedScript,
-    ).toBe(true);
+    expect(checkMixedScripts("Лозинка је промењена", "sr").hasUnexpectedScript).toBe(false);
+    expect(checkMixedScripts("Lozinka je promenjena", "sr").hasUnexpectedScript).toBe(true);
   });
 
   it("allows the expected script for non-Latin locales", () => {
-    expect(
-      checkIcuTranslationForMixedScripts("تحقّق من شمولات الحجز الخاصة بي", "ar-EG")
-        .hasUnexpectedScript,
-    ).toBe(false);
-    expect(
-      checkIcuTranslationForMixedScripts("تحقّق من شمولات الحجز الخاصة بي", "fr-FR")
-        .hasUnexpectedScript,
-    ).toBe(true);
+    expect(checkMixedScripts("تحقّق من شمولات الحجز الخاصة بي", "ar-EG").hasUnexpectedScript).toBe(
+      false,
+    );
+    expect(checkMixedScripts("تحقّق من شمولات الحجز الخاصة بي", "fr-FR").hasUnexpectedScript).toBe(
+      true,
+    );
   });
 
   it("supports optional pattern-based allowed spans", () => {
-    const result = checkIcuTranslationForMixedScripts(
-      "See https://例.example/help for details",
-      "en",
-      {
-        allowedPatterns: [/https?:\/\/[^\s]+/u],
-      },
-    );
+    const result = checkMixedScripts("See https://例.example/help for details", "en", {
+      allowedPatterns: [/https?:\/\/[^\s]+/u],
+    });
 
     expect(result.hasUnexpectedScript).toBe(false);
   });
-});
 
-describe("detectedScriptForCharacter", () => {
-  it("labels Latin, neutral, and non-Latin characters", () => {
-    expect(detectedScriptForCharacter("a")).toBe("Latin");
-    expect(detectedScriptForCharacter(".")).toBe("Neutral");
-    expect(detectedScriptForCharacter("а")).toBe("NonLatin");
+  it("checks plain text when requested", () => {
+    const result = checkMixedScripts("Email from PаyPal sent", "en", { inputFormat: "text" });
+
+    expect(result.visibleSegments).toEqual([
+      {
+        text: "Email from PаyPal sent",
+        path: "$",
+        start: 0,
+        end: 22,
+      },
+    ]);
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        char: "а",
+        script: "NonLatin",
+      }),
+    );
   });
 });
