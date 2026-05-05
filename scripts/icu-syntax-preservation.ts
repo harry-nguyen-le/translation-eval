@@ -20,14 +20,21 @@ type ExtractedTranslationEntry = {
   translatedContent?: string | null;
 };
 
+type SourceTargetPresenceIssue = {
+  code: "source_target_presence_mismatch";
+  message: string;
+  sourcePresent: boolean;
+  targetPresent: boolean;
+};
+
 type InvalidEntry = {
   id: string;
   field: string;
   locale: string | null;
   description: unknown;
   source?: string;
-  value: string;
-  issues: IcuSyntaxPreservationIssue[];
+  value?: string;
+  issues: Array<IcuSyntaxPreservationIssue | SourceTargetPresenceIssue>;
 };
 
 const TARGET_FIELDS = ["french", "german"] as const satisfies readonly TargetField[];
@@ -63,15 +70,29 @@ function evaluateStaticTranslations(translations: MasterTranslations) {
   for (const [id, entry] of Object.entries(translations)) {
     const source = entry.english;
 
-    if (typeof source !== "string") {
-      skippedTranslations += TARGET_FIELDS.length;
-      continue;
-    }
-
     for (const field of TARGET_FIELDS) {
       const target = entry[field];
 
-      if (typeof target !== "string") {
+      if (typeof source !== "string" || typeof target !== "string") {
+        if (typeof source === "string" || typeof target === "string") {
+          invalidEntries.push({
+            id,
+            field,
+            locale: field,
+            description: entry.description ?? null,
+            source: typeof source === "string" ? source : undefined,
+            value: typeof target === "string" ? target : undefined,
+            issues: [
+              {
+                code: "source_target_presence_mismatch",
+                message: "Source and target must either both be strings or both be absent",
+                sourcePresent: typeof source === "string",
+                targetPresent: typeof target === "string",
+              },
+            ],
+          });
+        }
+
         skippedTranslations += 1;
         continue;
       }
