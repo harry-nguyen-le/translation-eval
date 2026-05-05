@@ -6,22 +6,10 @@ import {
 } from "../src/escape-character-preservation/index";
 
 describe("collectEscapeSequences", () => {
-  it("collects and classifies escape sequences in a string", () => {
+  it("collects raw escape sequences in a string", () => {
     const escapes = collectEscapeSequences(String.raw`First\n\tSecond\\suffix\u00A0`);
 
-    expect(escapes.map((escape) => escape.kind)).toEqual([
-      "newline",
-      "tab",
-      "backslash",
-      "unicode",
-    ]);
-
-    expect(escapes.map((escape) => escape.raw)).toEqual([
-      String.raw`\n`,
-      String.raw`\t`,
-      String.raw`\\`,
-      String.raw`\u00A0`,
-    ]);
+    expect(escapes).toEqual([String.raw`\n`, String.raw`\t`, String.raw`\\`, String.raw`\u00A0`]);
   });
 });
 

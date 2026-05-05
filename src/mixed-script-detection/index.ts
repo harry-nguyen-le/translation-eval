@@ -45,10 +45,6 @@ export type MixedScriptCheckResult = {
   issues: ScriptIssue[];
 };
 
-export function expectedUnicodeScriptsForLocale(_locale: string): Set<string> {
-  return new Set(EXPECTED_SCRIPTS);
-}
-
 export function extractVisibleSegments(message: string): VisibleSegment[] {
   if (typeof message !== "string") {
     throw new TypeError("message must be a string");
@@ -68,7 +64,7 @@ export function checkIcuTranslationForMixedScripts(
   targetLocale: string,
   options: MixedScriptCheckOptions = {},
 ): MixedScriptCheckResult {
-  const expectedScripts = [...expectedUnicodeScriptsForLocale(targetLocale)];
+  const expectedScripts = [...EXPECTED_SCRIPTS];
   const visibleSegments = extractVisibleSegments(message);
   const issues = visibleSegments.flatMap((segment) =>
     checkSegment(segment, expectedScripts, options),
@@ -83,14 +79,10 @@ export function checkIcuTranslationForMixedScripts(
   };
 }
 
-export function charMatchesScript(char: string, script: string): boolean {
-  return (script === "Latn" || script === "Latin") && LATIN_SCRIPT_PATTERN.test(char);
-}
-
 export function detectedScriptForCharacter(char: string): DetectedScript {
   return NEUTRAL_SCRIPT_PATTERN.test(char)
     ? "Neutral"
-    : charMatchesScript(char, "Latn")
+    : LATIN_SCRIPT_PATTERN.test(char)
       ? "Latin"
       : "NonLatin";
 }

@@ -3,16 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   checkIcuTranslationForMixedScripts,
   detectedScriptForCharacter,
-  expectedUnicodeScriptsForLocale,
   extractVisibleSegments,
 } from "../src/mixed-script-detection/index";
-
-describe("expectedUnicodeScriptsForLocale", () => {
-  it("always expects Latin", () => {
-    expect([...expectedUnicodeScriptsForLocale("en")]).toEqual(["Latn"]);
-    expect([...expectedUnicodeScriptsForLocale("ja")]).toEqual(["Latn"]);
-  });
-});
 
 describe("extractVisibleSegments", () => {
   it("ignores placeholders and simple format arguments", () => {

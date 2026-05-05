@@ -15,7 +15,7 @@ import { collectEscapeSequences, validateEscapeCharacterPreservation } from "tra
 
 const escapes = collectEscapeSequences(String.raw`Line one\n\tLine two`);
 
-console.log(escapes.map((escape) => escape.kind)); // ["newline", "tab"]
+console.log(escapes); // ["\\n", "\\t"]
 
 const result = validateEscapeCharacterPreservation(
   String.raw`Line one\n\tLine two`,
