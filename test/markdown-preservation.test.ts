@@ -10,7 +10,7 @@ const hotelDescriptionJson = String.raw`"\n#### Rooms  \nMake yourself at home i
 
 describe("parseMarkdownForValidation", () => {
   it("parses JSON-string Markdown with escaped newlines", () => {
-    const result = parseMarkdownForValidation(hotelDescriptionJson);
+    const result = parseMarkdownForValidation(hotelDescriptionJson, { inputFormat: "json-string" });
 
     expect(result.inputFormat).toBe("json-string");
     expect(result.markdown.startsWith("\n#### Rooms")).toBe(true);
@@ -39,7 +39,7 @@ describe("validateMarkdown", () => {
   });
 
   it("returns invalid for JSON-string input that cannot be decoded", () => {
-    const result = validateMarkdown(String.raw`"Line one\z"`);
+    const result = validateMarkdown(String.raw`"Line one\z"`, { inputFormat: "json-string" });
 
     expect(result.isValid).toBe(false);
     expect(result.issues).toEqual([
@@ -102,22 +102,17 @@ describe("validateMarkdownPreservation", () => {
     expect(result.issues).toEqual([]);
   });
 
-  it("rejects changed pipe table shape", () => {
+  it("ignores changed pipe table shape", () => {
     const result = validateMarkdownPreservation(
       "| A | B |\n| --- | --- |\n| one | two |",
       "| A | B | C |\n| --- | --- | --- |\n| un | deux | trois |",
     );
 
-    expect(result.issues).toEqual([
-      expect.objectContaining({
-        code: "table_structure_changed",
-        sourceTables: [{ columns: 2, rows: 2 }],
-        targetTables: [{ columns: 3, rows: 2 }],
-      }),
-    ]);
+    expect(result.isValid).toBe(true);
+    expect(result.issues).toEqual([]);
   });
 
-  it("reports every structural preservation failure type in one input", () => {
+  it("reports heading and list preservation failures in one input", () => {
     const source = [
       "## Cancellation",
       "### Refunds",
@@ -158,11 +153,6 @@ describe("validateMarkdownPreservation", () => {
           { depth: 0, ordered: false, itemCount: 1 },
           { depth: 2, ordered: false, itemCount: 1 },
         ],
-      }),
-      expect.objectContaining({
-        code: "table_structure_changed",
-        sourceTables: [{ columns: 2, rows: 2 }],
-        targetTables: [{ columns: 3, rows: 2 }],
       }),
     ]);
   });

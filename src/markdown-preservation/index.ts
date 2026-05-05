@@ -1,11 +1,11 @@
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Heading, List, Root, RootContent } from "mdast";
 
-export type MarkdownInputFormat = "auto" | "json-string" | "runtime";
+export type MarkdownInputFormat = "json-string" | "runtime";
 
 export type MarkdownParseResult = {
   input: string;
-  inputFormat: Exclude<MarkdownInputFormat, "auto">;
+  inputFormat: MarkdownInputFormat;
   markdown: string;
   ast: Root;
 };
@@ -13,18 +13,12 @@ export type MarkdownParseResult = {
 type MarkdownStructure = {
   headingDepths: number[];
   lists: ListShape[];
-  tables: TableShape[];
 };
 
 type ListShape = {
   depth: number;
   ordered: boolean;
   itemCount: number;
-};
-
-type TableShape = {
-  columns: number;
-  rows: number;
 };
 
 export type MarkdownValidationIssue =
@@ -44,12 +38,6 @@ export type MarkdownValidationIssue =
       message: string;
       sourceLists: ListShape[];
       targetLists: ListShape[];
-    }
-  | {
-      code: "table_structure_changed";
-      message: string;
-      sourceTables: TableShape[];
-      targetTables: TableShape[];
     };
 
 export type MarkdownValidationResult = {
@@ -71,7 +59,7 @@ export function parseMarkdownForValidation(
   input: string,
   options: { inputFormat?: MarkdownInputFormat } = {},
 ): MarkdownParseResult {
-  const normalized = normalizeMarkdownInput(input, options.inputFormat ?? "auto");
+  const normalized = normalizeMarkdownInput(input, options.inputFormat ?? "runtime");
   const ast = fromMarkdown(normalized.markdown);
 
   return {
@@ -81,8 +69,6 @@ export function parseMarkdownForValidation(
     ast,
   };
 }
-
-export const parseMarkdownForPreservation = parseMarkdownForValidation;
 
 export function validateMarkdown(
   input: string,
@@ -159,18 +145,6 @@ function compareMarkdownStructure(
     });
   }
 
-  if (
-    sourceStructure.tables.length > 0 &&
-    !sameJson(sourceStructure.tables, targetStructure.tables)
-  ) {
-    issues.push({
-      code: "table_structure_changed",
-      message: "Pipe table count, row count, or column count changed",
-      sourceTables: sourceStructure.tables,
-      targetTables: targetStructure.tables,
-    });
-  }
-
   return issues;
 }
 
@@ -178,7 +152,6 @@ function extractMarkdownStructure(parsed: MarkdownParseResult): MarkdownStructur
   return {
     headingDepths: collectHeadingDepths(parsed.ast),
     lists: hasLikelyStructuredList(parsed.markdown) ? collectListShapes(parsed.ast) : [],
-    tables: collectPipeTableShapes(parsed.markdown),
   };
 }
 
@@ -214,91 +187,8 @@ function collectListShapes(ast: Root): ListShape[] {
   return lists;
 }
 
-function collectPipeTableShapes(markdown: string): TableShape[] {
-  const lines = markdown.split(/\r?\n/);
-  const tables: TableShape[] = [];
-
-  for (let index = 1; index < lines.length; index += 1) {
-    const separator = lines[index];
-
-    if (!separator || !isPipeTableSeparator(separator)) {
-      continue;
-    }
-
-    const header = lines[index - 1] ?? "";
-    const columns = countPipeTableColumns(header);
-
-    if (columns < 2) {
-      continue;
-    }
-
-    let rows = 1;
-
-    for (let rowIndex = index + 1; rowIndex < lines.length; rowIndex += 1) {
-      const row = lines[rowIndex] ?? "";
-
-      if (!row.includes("|") || row.trim().length === 0) {
-        break;
-      }
-
-      rows += 1;
-    }
-
-    tables.push({
-      columns,
-      rows,
-    });
-  }
-
-  return tables;
-}
-
 function hasLikelyStructuredList(markdown: string): boolean {
   return (markdown.match(/^ {0,3}(?:[-+*]|\d+[.)])\s+\S/gmu)?.length ?? 0) > 1;
-}
-
-function isPipeTableSeparator(line: string): boolean {
-  const cells = splitPipeTableCells(line);
-
-  return cells.length >= 2 && cells.every((cell) => /^:?-{3,}:?$/u.test(cell.trim()));
-}
-
-function countPipeTableColumns(line: string): number {
-  return splitPipeTableCells(line).length;
-}
-
-function splitPipeTableCells(line: string): string[] {
-  const trimmed = line.trim();
-  const withoutOuterPipes = trimmed.replace(/^\|/u, "").replace(/\|$/u, "");
-  const cells: string[] = [];
-  let current = "";
-  let escaped = false;
-
-  for (const char of withoutOuterPipes) {
-    if (escaped) {
-      current += char;
-      escaped = false;
-      continue;
-    }
-
-    if (char === "\\") {
-      current += char;
-      escaped = true;
-      continue;
-    }
-
-    if (char === "|") {
-      cells.push(current);
-      current = "";
-      continue;
-    }
-
-    current += char;
-  }
-
-  cells.push(current);
-
-  return cells;
 }
 
 function visitRootContent(
@@ -349,12 +239,10 @@ function normalizeMarkdownInput(
   input: string,
   inputFormat: MarkdownInputFormat,
 ): {
-  inputFormat: Exclude<MarkdownInputFormat, "auto">;
+  inputFormat: MarkdownInputFormat;
   markdown: string;
 } {
-  const resolvedFormat = inputFormat === "auto" ? detectMarkdownInputFormat(input) : inputFormat;
-
-  if (resolvedFormat === "runtime") {
+  if (inputFormat === "runtime") {
     return {
       inputFormat: "runtime",
       markdown: input,
@@ -371,9 +259,4 @@ function normalizeMarkdownInput(
     inputFormat: "json-string",
     markdown: parsed,
   };
-}
-
-function detectMarkdownInputFormat(input: string): Exclude<MarkdownInputFormat, "auto"> {
-  const trimmed = input.trim();
-  return trimmed.startsWith('"') && trimmed.endsWith('"') ? "json-string" : "runtime";
 }

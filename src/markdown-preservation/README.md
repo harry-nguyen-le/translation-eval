@@ -2,13 +2,12 @@
 
 Validates translated Markdown by parsing it with `mdast-util-from-markdown`.
 
-The check accepts runtime Markdown strings and JSON string literals, so raw escaped values such as `"\n#### Rooms  \n..."` are decoded before Markdown parsing.
+The check accepts runtime Markdown strings by default. Raw JSON string literals such as `"\n#### Rooms  \n..."` can be decoded explicitly with `inputFormat: "json-string"`.
 
 When source content is available, it compares source and target Markdown structure:
 
 - heading hierarchy, as the sequence of heading depths
 - list structure, as list count, nesting depth, ordered/unordered type, and item counts
-- pipe table shape, as table count, row count, and column count
 
 When source content is not available, such as `translation-data/extracted-translations.json`, the CLI can only parse-check the target strings.
 
@@ -17,7 +16,9 @@ When source content is not available, such as `translation-data/extracted-transl
 ```ts
 import { parseMarkdownForValidation, validateMarkdownPreservation } from "translation-eval";
 
-const parsed = parseMarkdownForValidation(String.raw`"\n#### Rooms  \nMake yourself at home."`);
+const parsed = parseMarkdownForValidation(String.raw`"\n#### Rooms  \nMake yourself at home."`, {
+  inputFormat: "json-string",
+});
 
 console.log(parsed.ast.children);
 
