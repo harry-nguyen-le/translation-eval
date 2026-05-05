@@ -1,0 +1,366 @@
+$ bun run scripts/mixed-script-detection.ts translation-data/extracted-translations.json
+Mixed script detection
+File: translation-data/extracted-translations.json
+Mode: extracted-translations
+Entries: 59095
+Checked translations: 59095
+Skipped null translations: 0
+Invalid entries: 19
+Unexpected script issues: 126
+Evaluation errors: 0
+
+First 19 invalid entries:
+{
+  "id": "5465",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "(données स्रोत pour formattedCartItems)",
+  "description": null,
+  "issueCount": 5,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "त",
+    "र",
+    "स",
+    "ो",
+    "्"
+  ]
+}
+{
+  "id": "10748",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Je ne voyage pas assez ხშირად",
+  "description": null,
+  "issueCount": 6,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "ა",
+    "დ",
+    "ი",
+    "რ",
+    "შ",
+    "ხ"
+  ]
+}
+{
+  "id": "20040",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "La proposition visait à faire revivre le nom précolonial de Phuket, mais elle a été bloquée au parlement après les اعتراضs des groupes touristiques. « Phuket » reste donc la marque mondiale.",
+  "description": null,
+  "issueCount": 6,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "ا",
+    "ت",
+    "ر",
+    "ض",
+    "ع"
+  ]
+}
+{
+  "id": "20927",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Jeton غير valide.",
+  "description": null,
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "ر",
+    "غ",
+    "ي"
+  ]
+}
+{
+  "id": "21508",
+  "field": "translatedContent",
+  "locale": "de-DE",
+  "value": "43153 Rate Plan测试活动 Paketstufe sofort reduziert",
+  "description": null,
+  "issueCount": 4,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "动",
+    "活",
+    "测",
+    "试"
+  ]
+}
+{
+  "id": "21509",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "43153 Rate Plan测试活动 Niveau forfait réduction directe",
+  "description": null,
+  "issueCount": 4,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "动",
+    "活",
+    "测",
+    "试"
+  ]
+}
+{
+  "id": "27153",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Ce n’est pas grave ! Nous comprenons qu’il faut du temps pour rassembler tout ce dont vous avez besoin. Sans ce document, votre voyage pourrait être प्रभावितé. Notre équipe Tours Concierge est là pour vous aider à déterminer les prochaines étapes.",
+  "description": null,
+  "issueCount": 8,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "त",
+    "प",
+    "भ",
+    "र",
+    "व",
+    "ा",
+    "ि",
+    "्"
+  ]
+}
+{
+  "id": "27963",
+  "field": "translatedContent",
+  "locale": "ar-EG",
+  "value": "لقد أعدتُ إرسال رسالة تأكيد الحجز إلى felix.ivanov@luxuryescapes.com. يُرجى الانتظار بضع دقائق حتى تصل إلى صندوق الوارد لديك.",
+  "description": null,
+  "issueCount": 27,
+  "unexpectedScripts": [
+    "Latin"
+  ],
+  "unexpectedChars": [
+    "a",
+    "c",
+    "e",
+    "f",
+    "i",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "r",
+    "s",
+    "u",
+    "v",
+    "x",
+    "y"
+  ]
+}
+{
+  "id": "30716",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "<b>Vous avez déjà चयनné une chambre dans {hotelName}.</b> Choisir une nouvelle chambre la remplacera.",
+  "description": null,
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "च",
+    "न",
+    "य"
+  ]
+}
+{
+  "id": "31407",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Cette visite est garantie d’avoir lieu à la date prévue à partir de 2 personnes minimum. Il existe une faible संभावना qu’elle n’ait pas lieu si le nombre minimum de participants n’est pas atteint. Dans ce cas, nous vous proposerons de choisir une autre date de visite, une autre visite ou un remboursement intégral.",
+  "description": null,
+  "issueCount": 7,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "ं",
+    "न",
+    "भ",
+    "व",
+    "स",
+    "ा"
+  ]
+}
+{
+  "id": "32002",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Obtenez {discountPercentage}% de réduction avec les prix सदस्य",
+  "description": null,
+  "issueCount": 5,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "द",
+    "य",
+    "स",
+    "्"
+  ]
+}
+{
+  "id": "33906",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Votre aperçu gratuit est disponible jusqu’au {date} ou jusqu’à ce que vous effectuiez ձեր premier achat {programName}.",
+  "description": null,
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "ե",
+    "ձ",
+    "ր"
+  ]
+}
+{
+  "id": "37606",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Vous pouvez annuler votre réservation sans frais dans les 48 heures suivant la soumission de votre réservation. Passé ce délai, le montant de la réservation vous sera automatiquement prélevé conformément au plan de paiement que vous avez चयनné. Veuillez consulter nos conditions générales ci-dessous pour connaître les conditions de remboursement.",
+  "description": null,
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "च",
+    "न",
+    "य"
+  ]
+}
+{
+  "id": "39322",
+  "field": "translatedContent",
+  "locale": "en-GB",
+  "value": "*   Des frais supplémentaires peuvent s’appliquer pour les personnes supplémentaires et varier en fonction de la politique de l’établissement\n*   Une pièce d’identité avec photo délivrée par le gouvernement et une carte de crédit, de débit ou un dépôt en espèces peuvent être պահանջés à l’arrivée pour les frais accessoires\n*   Les demandes spéciales sont soumises à disponibilité au moment de l’arrivée et peuvent entraîner des frais supplémentaires ; elles ne peuvent pas être garanties\n*   Cet établissement accepte les cartes de crédit ; les espèces ne sont pas acceptées\n*   L’hôte a indiqué qu’il y a un détecteur de monoxyde de carbone sur place\n*   L’hôte a indiqué qu’il y a un détecteur de fumée sur place\n*   Les équipements de sécurité de cet établissement comprennent un extincteur, un système de sécurité et une trousse de premiers secours\n*   Cet établissement est nettoyé par des professionnels\n*   Veuillez noter que les normes culturelles et les politiques relatives aux clients peuvent varier selon le pays et l’établissement ; les politiques indiquées sont fournies par l’établissement\n\n*   Les clients organisant des réunions conviviales dans les chambres sont soumis à des frais supplémentaires.",
+  "description": null,
+  "issueCount": 6,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "ա",
+    "հ",
+    "ն",
+    "պ",
+    "ջ"
+  ]
+}
+{
+  "id": "48940",
+  "field": "translatedContent",
+  "locale": "ar-EG",
+  "value": "تحقق من inclusions الخاصة بي",
+  "description": null,
+  "issueCount": 10,
+  "unexpectedScripts": [
+    "Latin"
+  ],
+  "unexpectedChars": [
+    "c",
+    "i",
+    "l",
+    "n",
+    "o",
+    "s",
+    "u"
+  ]
+}
+{
+  "id": "52096",
+  "field": "translatedContent",
+  "locale": "de-DE",
+  "value": "*  [url](https://admin18.fat.klook.io/mspa/experiencesadmincommon/act/activity/detail/46467?lang=en_US&edit_status=1&ref=&page_from=admin)\n\n\n\n*  [url](https://admin18.fat.klook.io/mspa/experiencesadmincommon/act/activity/detail/46467?lang=en_US&edit_status=1&ref=&page_from=admin)\n\n\n\n\n\n__Tag 1__\n- [Abreise] 00:01, Treffpunkt bei [洱海](https://www.google.com/maps/search/?api=1&query=25.8006596,100.1927389&query_place_id=ChIJ8ytzWW2_JzcRtXBp2nSDKLQ).\n- [Attraktion/Erlebnis]  1 Stunde(n),  Jade Dragon Snow Mountain, Cangshan Beilu Haibo 3075m, Erhai Lake\n- [Attraktion/Erlebnis]  1 Min.(en),  Paris Champs de Mars-Eiffel Tower Station\n- [Attraktion/Erlebnis]  2 Min.(en),  Hokkaido Tokachi Ecology Park, Houyan, 北大医院整形外科\n- [Essen]    Ocean University of China\n__Tag 2__\n- [Unterkunft]  Erhai Lake; Snowmobile Hall of Fame Snowmobiling Museum\n- [Rückkehr] 04:00, Shuttle inbegriffen\n- Tag {num}",
+  "description": null,
+  "issueCount": 10,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "北",
+    "医",
+    "外",
+    "大",
+    "形",
+    "整",
+    "洱",
+    "海",
+    "科",
+    "院"
+  ]
+}
+{
+  "id": "54477",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Veuillez noter que cette sélection de dates impactera uniquement votre hébergement et ne modifiera pas les réservations de vols déjà effectuées. Pour modifier les dates de vos vols, veuillez nous contacter au numéro ci-dessous et चयनner l’option 3 pour les vols. Nous vous recommandons de nous contacter afin de modifier vos vols avant de modifier votre hébergement.",
+  "description": null,
+  "issueCount": 3,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "च",
+    "न",
+    "य"
+  ]
+}
+{
+  "id": "54846",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Phuket était un centre التجاري de la Route maritime de la soie",
+  "description": null,
+  "issueCount": 7,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "ا",
+    "ت",
+    "ج",
+    "ر",
+    "ل",
+    "ي"
+  ]
+}
+{
+  "id": "58088",
+  "field": "translatedContent",
+  "locale": "fr-FR",
+  "value": "Si vous êtes victime d’un accident au volant d’une voiture de location, suivez ces étapes : 1. Assurez votre sécurité : veillez à votre sécurité et à celle des autres personnes impliquées. Si possible, mettez-vous en lieu sûr et contactez les services d’urgence si nécessaire. 2. Informez la société de location et la police : signalez immédiatement l’accident en utilisant leur numéro de contact d’urgence dédié. Ils vous indiqueront les prochaines étapes à suivre. 3. Documentez l’incident : prenez des photos du lieu de l’accident, recueillez les informations des personnes impliquées ou des témoins, et notez tous les détails pertinents. Cette documentation peut être պահանջée pour les demandes d’indemnisation auprès de l’assurance. Les informations que vous devrez probablement recueillir comprennent le numéro d’immatriculation et le numéro de permis de conduire des deux véhicules et conducteurs, l’adresse de l’autre conducteur ainsi que des photos de l’incident.",
+  "description": null,
+  "issueCount": 6,
+  "unexpectedScripts": [
+    "NonLatin"
+  ],
+  "unexpectedChars": [
+    "ա",
+    "հ",
+    "ն",
+    "պ",
+    "ջ"
+  ]
+}
+error: script "i18n:mixed-script-detection" exited with code 1
