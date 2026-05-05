@@ -1,6 +1,6 @@
 # translation-eval
 
-ICU-aware translation QA utilities. The ultimate goal is for these checks to be integrated into `svc-translation`
+ICU-aware translation QA utilities. The ultimate goal is for these checks to be integrated into `svc-translation`, modifications will be needed to use existing fields in `svc-translation` request task
 
 This package contains deterministic validation checks for translated UI strings:
 
