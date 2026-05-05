@@ -1,25 +1,25 @@
 # Escape Character Preservation
 
-Checks that translated JSON string literals preserve the source string's raw escape sequences.
+Checks that translated strings preserve the source string's escape sequences.
 
-The check scans raw JSON string text for escapes such as `\n`, `\t`, `\\`, and `\u00A0`, then compares source and target as a multiset. Translated text can change and escapes can move, but the same escape sequences must remain present.
+The check scans string content for escapes such as `\n`, `\t`, `\\`, and `\u00A0`, then compares source and target in order. Translated text can change, but the same escape sequences must remain present in the same sequence.
 
 Escaped quotes (`\"`) are intentionally ignored because translations often replace ASCII quotes with locale-appropriate punctuation such as `« ... »` or `„...“`.
 
-This is useful before or alongside content-specific checks such as Markdown preservation, where `"\n#### Rooms"` needs to decode correctly while still preserving the original newline escape inventory.
+This check assumes callers pass the string value to validate. It does not parse JSON objects or recover raw JSON string literals.
 
 ## API
 
 ```ts
-import { collectJsonStringEscapes, validateEscapeCharacterPreservation } from "translation-eval";
+import { collectEscapeSequences, validateEscapeCharacterPreservation } from "translation-eval";
 
-const escapes = collectJsonStringEscapes(String.raw`"Line one\n\tLine two"`);
+const escapes = collectEscapeSequences(String.raw`Line one\n\tLine two`);
 
 console.log(escapes.map((escape) => escape.kind)); // ["newline", "tab"]
 
 const result = validateEscapeCharacterPreservation(
-  String.raw`"Line one\n\tLine two"`,
-  String.raw`"Ligne un\tLigne deux\n"`,
+  String.raw`Line one\n\tLine two`,
+  String.raw`Ligne un\n\tLigne deux`,
 );
 
 console.log(result); // []
@@ -29,8 +29,8 @@ Changed escape inventories are reported with the raw source and target escapes:
 
 ```ts
 const issues = validateEscapeCharacterPreservation(
-  String.raw`"Line one\n\tLine two"`,
-  String.raw`"Ligne un\nLigne deux"`,
+  String.raw`Line one\n\tLine two`,
+  String.raw`Ligne un\nLigne deux`,
 );
 
 console.log(issues);

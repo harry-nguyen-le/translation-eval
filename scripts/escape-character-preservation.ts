@@ -1,13 +1,9 @@
 import { readFileSync } from "node:fs";
 
-import {
-  extractRawJsonStringFieldsByObjectKey,
-  validateEscapeCharacterPreservation,
-} from "../src/escape-character-preservation/index";
+import { validateEscapeCharacterPreservation } from "../src/escape-character-preservation/index";
 import type { EscapeCharacterPreservationIssue } from "../src/escape-character-preservation/index";
 
 type TargetField = "french" | "german";
-type TranslationField = "english" | TargetField;
 
 type MasterTranslationEntry = {
   description?: unknown;
@@ -15,7 +11,6 @@ type MasterTranslationEntry = {
 } & Partial<Record<TargetField, string | null>>;
 
 type MasterTranslations = Record<string, MasterTranslationEntry>;
-type RawTranslationFields = Partial<Record<TranslationField, string>>;
 
 type InvalidEntry = {
   id: string;
@@ -23,17 +18,10 @@ type InvalidEntry = {
   description: unknown;
   source: string;
   target: string;
-  sourceRaw: string;
-  targetRaw: string;
   issues: EscapeCharacterPreservationIssue[];
 };
 
 const TARGET_FIELDS = ["french", "german"] as const satisfies readonly TargetField[];
-const TRANSLATION_FIELDS = [
-  "english",
-  "french",
-  "german",
-] as const satisfies readonly TranslationField[];
 const DEFAULT_FILE = "translation-data/cp-static-translations.json";
 const DEFAULT_MAX_REPORTS = 50;
 
@@ -41,11 +29,9 @@ const args = parseArgs(process.argv.slice(2));
 const filePath = args.filePath ?? DEFAULT_FILE;
 const maxReports = args.maxReports ?? DEFAULT_MAX_REPORTS;
 
-const rawJson = readFileSync(filePath, "utf8");
-const rawTranslations = readJson(rawJson, filePath);
+const rawTranslations = readJsonFile(filePath);
 const translations = assertMasterTranslations(rawTranslations, filePath);
-const rawFieldsById = extractRawJsonStringFieldsByObjectKey(rawJson, TRANSLATION_FIELDS);
-const result = evaluateTranslations(translations, rawFieldsById);
+const result = evaluateTranslations(translations);
 
 printSummary(filePath, result, maxReports);
 
@@ -53,35 +39,30 @@ if (result.invalidEntries.length > 0) {
   process.exitCode = 1;
 }
 
-function evaluateTranslations(
-  translations: MasterTranslations,
-  rawFieldsById: Map<string, RawTranslationFields>,
-) {
+function evaluateTranslations(translations: MasterTranslations) {
   const invalidEntries: InvalidEntry[] = [];
   let checkedTranslations = 0;
   let skippedTranslations = 0;
 
   for (const [id, entry] of Object.entries(translations)) {
     const source = entry.english;
-    const sourceRaw = rawFieldsById.get(id)?.english;
 
-    if (typeof source !== "string" || typeof sourceRaw !== "string") {
+    if (typeof source !== "string") {
       skippedTranslations += TARGET_FIELDS.length;
       continue;
     }
 
     for (const field of TARGET_FIELDS) {
       const target = entry[field];
-      const targetRaw = rawFieldsById.get(id)?.[field];
 
-      if (typeof target !== "string" || typeof targetRaw !== "string") {
+      if (typeof target !== "string") {
         skippedTranslations += 1;
         continue;
       }
 
       checkedTranslations += 1;
 
-      const issues = validateEscapeCharacterPreservation(sourceRaw, targetRaw);
+      const issues = validateEscapeCharacterPreservation(source, target);
 
       if (issues.length > 0) {
         invalidEntries.push({
@@ -90,8 +71,6 @@ function evaluateTranslations(
           description: entry.description ?? null,
           source,
           target,
-          sourceRaw,
-          targetRaw,
           issues,
         });
       }
@@ -106,9 +85,9 @@ function evaluateTranslations(
   };
 }
 
-function readJson(rawJson: string, path: string): unknown {
+function readJsonFile(path: string): unknown {
   try {
-    return JSON.parse(rawJson);
+    return JSON.parse(readFileSync(path, "utf8"));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to read ${path}: ${message}`);
