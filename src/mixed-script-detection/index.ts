@@ -9,7 +9,9 @@ import {
 
 const NEUTRAL_SCRIPT_PATTERN = /^[\p{Script=Common}\p{Script=Inherited}]$/u;
 const LATIN_SCRIPT_PATTERN = /^\p{Script_Extensions=Latn}$/u;
-const EXPECTED_SCRIPTS = ["Latn"];
+const DEFAULT_SCRIPT = "Latn";
+
+const scriptPatterns = new Map<string, RegExp>();
 
 type Range = [start: number, end: number];
 
@@ -45,6 +47,14 @@ export type MixedScriptCheckResult = {
   issues: ScriptIssue[];
 };
 
+export function expectedUnicodeScriptsForLocale(locale: string): string[] {
+  try {
+    return [new Intl.Locale(locale).maximize().script ?? DEFAULT_SCRIPT];
+  } catch {
+    return [DEFAULT_SCRIPT];
+  }
+}
+
 export function extractVisibleSegments(message: string): VisibleSegment[] {
   if (typeof message !== "string") {
     throw new TypeError("message must be a string");
@@ -64,8 +74,29 @@ export function checkIcuTranslationForMixedScripts(
   targetLocale: string,
   options: MixedScriptCheckOptions = {},
 ): MixedScriptCheckResult {
-  const expectedScripts = [...EXPECTED_SCRIPTS];
+  const expectedScripts = expectedUnicodeScriptsForLocale(targetLocale);
   const visibleSegments = extractVisibleSegments(message);
+  const issues = visibleSegments.flatMap((segment) =>
+    checkSegment(segment, expectedScripts, options),
+  );
+
+  return {
+    targetLocale,
+    expectedScripts,
+    visibleSegments,
+    hasUnexpectedScript: issues.length > 0,
+    issues,
+  };
+}
+
+export function checkTextForMixedScripts(
+  text: string,
+  targetLocale: string,
+  options: MixedScriptCheckOptions = {},
+): MixedScriptCheckResult {
+  const expectedScripts = expectedUnicodeScriptsForLocale(targetLocale);
+  const visibleSegments =
+    text.trim().length > 0 ? [{ text, path: "$", start: 0, end: text.length }] : [];
   const issues = visibleSegments.flatMap((segment) =>
     checkSegment(segment, expectedScripts, options),
   );
@@ -101,7 +132,11 @@ function checkSegment(
   for (const char of text) {
     const script = detectedScriptForCharacter(char);
 
-    if (!isIndexAllowed(index, allowedRanges) && script === "NonLatin") {
+    if (
+      !isIndexAllowed(index, allowedRanges) &&
+      script !== "Neutral" &&
+      !matchesExpectedScripts(char, expectedScripts)
+    ) {
       issues.push({
         char,
         script,
@@ -117,6 +152,22 @@ function checkSegment(
   }
 
   return issues;
+}
+
+function matchesExpectedScripts(char: string, expectedScripts: readonly string[]): boolean {
+  return expectedScripts.some((script) => scriptPattern(script).test(char));
+}
+
+function scriptPattern(script: string): RegExp {
+  const existing = scriptPatterns.get(script);
+
+  if (existing) {
+    return existing;
+  }
+
+  const pattern = new RegExp(`^\\p{Script_Extensions=${script}}$`, "u");
+  scriptPatterns.set(script, pattern);
+  return pattern;
 }
 
 function buildAllowedRanges(text: string, options: MixedScriptCheckOptions): Range[] {

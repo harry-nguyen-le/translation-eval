@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import {
   checkIcuTranslationForMixedScripts,
+  checkTextForMixedScripts,
   type ScriptIssue,
 } from "../src/mixed-script-detection/index";
 
@@ -13,34 +14,33 @@ type MasterTranslationEntry = {
 
 type MasterTranslations = Record<string, MasterTranslationEntry>;
 
+type ExtractedTranslationEntry = {
+  sk?: string | null;
+  translatedContent?: string | null;
+};
+
 type EvaluationIssue = ScriptIssue & {
   id: string;
-  field: TranslationField;
+  field: string;
   locale: string;
 };
 
 type EvaluationError = {
   id: string;
-  field: TranslationField;
+  field: string;
   locale: string;
   error: string;
 };
 
 type InvalidEntry = {
   id: string;
-  field: TranslationField;
+  field: string;
   locale: string;
   value: string;
   description: unknown;
   issueCount: number;
   unexpectedScripts: string[];
   unexpectedChars: string[];
-  issues: Array<{
-    char: string;
-    script: ScriptIssue["script"];
-    indexInSegment: number;
-    path: string;
-  }>;
 };
 
 const TRANSLATION_LOCALES = {
@@ -57,8 +57,7 @@ const filePath = args.filePath ?? DEFAULT_FILE;
 const maxReports = args.maxReports ?? DEFAULT_MAX_REPORTS;
 
 const rawTranslations = readJsonFile(filePath);
-const translations = assertMasterTranslations(rawTranslations, filePath);
-const result = evaluateTranslations(translations);
+const result = evaluateMixedScriptFile(rawTranslations, filePath);
 
 printSummary(filePath, result, maxReports);
 
@@ -66,7 +65,15 @@ if (result.issues.length > 0 || result.errors.length > 0) {
   process.exitCode = 1;
 }
 
-function evaluateTranslations(translations: MasterTranslations) {
+function evaluateMixedScriptFile(value: unknown, path: string) {
+  if (Array.isArray(value)) {
+    return evaluateExtractedTranslations(value, path);
+  }
+
+  return evaluateStaticTranslations(assertMasterTranslations(value, path));
+}
+
+function evaluateStaticTranslations(translations: MasterTranslations) {
   const issues: EvaluationIssue[] = [];
   const invalidEntries: InvalidEntry[] = [];
   const errors: EvaluationError[] = [];
@@ -94,50 +101,21 @@ function evaluateTranslations(translations: MasterTranslations) {
         continue;
       }
 
-      checkedTranslations += 1;
-
-      try {
-        const check = checkIcuTranslationForMixedScripts(message, locale);
-
-        if (check.issues.length > 0) {
-          invalidEntries.push({
-            id,
-            field,
-            locale,
-            value: message,
-            description: entry.description ?? null,
-            issueCount: check.issues.length,
-            unexpectedScripts: uniqueSorted(check.issues.map((issue) => String(issue.script))),
-            unexpectedChars: uniqueSorted(check.issues.map((issue) => issue.char)),
-            issues: check.issues.map((issue) => ({
-              char: issue.char,
-              script: issue.script,
-              indexInSegment: issue.indexInSegment,
-              path: issue.path,
-            })),
-          });
-        }
-
-        for (const issue of check.issues) {
-          issues.push({
-            ...issue,
-            id,
-            field,
-            locale,
-          });
-        }
-      } catch (error) {
-        errors.push({
-          id,
-          field,
-          locale,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
+      checkedTranslations += evaluateMessage({
+        id,
+        field,
+        locale,
+        message,
+        description: entry.description ?? null,
+        invalidEntries,
+        issues,
+        errors,
+      });
     }
   }
 
   return {
+    mode: "static-translations",
     entries: Object.keys(translations).length,
     checkedTranslations,
     skippedNullTranslations,
@@ -145,6 +123,171 @@ function evaluateTranslations(translations: MasterTranslations) {
     issues,
     errors,
   };
+}
+
+function evaluateExtractedTranslations(value: unknown[], path: string) {
+  const issues: EvaluationIssue[] = [];
+  const invalidEntries: InvalidEntry[] = [];
+  const errors: EvaluationError[] = [];
+  let checkedTranslations = 0;
+  let skippedNullTranslations = 0;
+
+  for (const [index, entry] of value.entries()) {
+    if (!entry || typeof entry !== "object") {
+      errors.push({
+        id: String(index),
+        field: "translatedContent",
+        locale: "unknown",
+        error: `${path}[${index}] must be an object`,
+      });
+      continue;
+    }
+
+    const translation = entry as ExtractedTranslationEntry;
+    const locale = typeof translation.sk === "string" ? translation.sk : "unknown";
+
+    if (translation.translatedContent === null || translation.translatedContent === undefined) {
+      skippedNullTranslations += 1;
+      continue;
+    }
+
+    if (typeof translation.translatedContent !== "string") {
+      errors.push({
+        id: String(index),
+        field: "translatedContent",
+        locale,
+        error: "Expected translatedContent to be a string or null",
+      });
+      continue;
+    }
+
+    checkedTranslations += evaluateMessage({
+      id: String(index),
+      field: "translatedContent",
+      locale,
+      message: translation.translatedContent,
+      description: null,
+      invalidEntries,
+      issues,
+      errors,
+    });
+  }
+
+  return {
+    mode: "extracted-translations",
+    entries: value.length,
+    checkedTranslations,
+    skippedNullTranslations,
+    invalidEntries,
+    issues,
+    errors,
+  };
+}
+
+function evaluateMessage({
+  id,
+  field,
+  locale,
+  message,
+  description,
+  invalidEntries,
+  issues,
+  errors,
+}: {
+  id: string;
+  field: string;
+  locale: string;
+  message: string;
+  description: unknown;
+  invalidEntries: InvalidEntry[];
+  issues: EvaluationIssue[];
+  errors: EvaluationError[];
+}): 1 {
+  const check = checkMessageForMixedScripts(message, locale);
+
+  if (!check.ok) {
+    errors.push({
+      id,
+      field,
+      locale,
+      error: check.error,
+    });
+    return 1;
+  }
+
+  if (check.issues.length > 0) {
+    invalidEntries.push({
+      id,
+      field,
+      locale,
+      value: message,
+      description,
+      issueCount: check.issues.length,
+      unexpectedScripts: uniqueSorted(check.issues.map((issue) => String(issue.script))),
+      unexpectedChars: uniqueSorted(check.issues.map((issue) => issue.char)),
+    });
+  }
+
+  for (const issue of check.issues) {
+    issues.push({
+      ...issue,
+      id,
+      field,
+      locale,
+    });
+  }
+
+  return 1;
+}
+
+function checkMessageForMixedScripts(
+  message: string,
+  locale: string,
+): { ok: true; issues: ScriptIssue[] } | { ok: false; error: string } {
+  try {
+    return {
+      ok: true,
+      issues: checkIcuTranslationForMixedScripts(message, locale).issues,
+    };
+  } catch (error) {
+    const jsonStrings = collectJsonStringValues(message);
+
+    if (jsonStrings.length > 0) {
+      return {
+        ok: true,
+        issues: checkTextForMixedScripts(jsonStrings.join("\n"), locale).issues,
+      };
+    }
+
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+function collectJsonStringValues(input: string): string[] {
+  try {
+    return collectStringValues(JSON.parse(input));
+  } catch {
+    return [];
+  }
+}
+
+function collectStringValues(value: unknown): string[] {
+  if (typeof value === "string") {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(collectStringValues);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).flatMap(collectStringValues);
+  }
+
+  return [];
 }
 
 function readJsonFile(path: string): unknown {
@@ -201,11 +344,12 @@ function parseArgs(args: string[]): {
 
 function printSummary(
   filePath: string,
-  result: ReturnType<typeof evaluateTranslations>,
+  result: ReturnType<typeof evaluateMixedScriptFile>,
   maxReports: number,
 ): void {
   console.log("Mixed script detection");
   console.log(`File: ${filePath}`);
+  console.log(`Mode: ${result.mode}`);
   console.log(`Entries: ${result.entries}`);
   console.log(`Checked translations: ${result.checkedTranslations}`);
   console.log(`Skipped null translations: ${result.skippedNullTranslations}`);
@@ -243,7 +387,6 @@ function formatInvalidEntry(entry: InvalidEntry): string {
       issueCount: entry.issueCount,
       unexpectedScripts: entry.unexpectedScripts,
       unexpectedChars: entry.unexpectedChars,
-      issues: entry.issues,
     },
     null,
     2,

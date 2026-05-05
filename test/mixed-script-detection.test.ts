@@ -3,8 +3,16 @@ import { describe, expect, it } from "vitest";
 import {
   checkIcuTranslationForMixedScripts,
   detectedScriptForCharacter,
+  expectedUnicodeScriptsForLocale,
   extractVisibleSegments,
 } from "../src/mixed-script-detection/index";
+
+describe("expectedUnicodeScriptsForLocale", () => {
+  it("uses the likely Unicode script for the target locale", () => {
+    expect(expectedUnicodeScriptsForLocale("de-DE")).toEqual(["Latn"]);
+    expect(expectedUnicodeScriptsForLocale("ar-EG")).toEqual(["Arab"]);
+  });
+});
 
 describe("extractVisibleSegments", () => {
   it("ignores placeholders and simple format arguments", () => {
@@ -82,12 +90,23 @@ describe("checkIcuTranslationForMixedScripts", () => {
     expect(spoofed.issues.some((issue) => issue.script === "NonLatin")).toBe(true);
   });
 
-  it("ignores locale script subtags", () => {
+  it("uses the locale's likely script", () => {
     expect(
-      checkIcuTranslationForMixedScripts("Lozinka je promenjena", "sr").hasUnexpectedScript,
+      checkIcuTranslationForMixedScripts("Лозинка је промењена", "sr").hasUnexpectedScript,
     ).toBe(false);
     expect(
-      checkIcuTranslationForMixedScripts("Лозинка је промењена", "sr-Latn").hasUnexpectedScript,
+      checkIcuTranslationForMixedScripts("Lozinka je promenjena", "sr").hasUnexpectedScript,
+    ).toBe(true);
+  });
+
+  it("allows the expected script for non-Latin locales", () => {
+    expect(
+      checkIcuTranslationForMixedScripts("تحقّق من شمولات الحجز الخاصة بي", "ar-EG")
+        .hasUnexpectedScript,
+    ).toBe(false);
+    expect(
+      checkIcuTranslationForMixedScripts("تحقّق من شمولات الحجز الخاصة بي", "fr-FR")
+        .hasUnexpectedScript,
     ).toBe(true);
   });
 
