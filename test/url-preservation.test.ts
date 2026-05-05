@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   assertUrlPreservation,
   extractUrls,
-  formatUrlPreservationIssues,
   validateUrlPreservation,
 } from "../src/url-preservation/index";
 
@@ -78,18 +77,5 @@ describe("assertUrlPreservation", () => {
     expect(() =>
       assertUrlPreservation("Visit https://example.com.", "Consultez https://example.fr."),
     ).toThrow(/missing "https:\/\/example\.com"/);
-  });
-});
-
-describe("formatUrlPreservationIssues", () => {
-  it("formats issue arrays for guard-step logs", () => {
-    const result = validateUrlPreservation(
-      "Visit https://example.com.",
-      "Consultez https://example.fr.",
-    );
-
-    expect(formatUrlPreservationIssues(result.issues)).toContain(
-      'URL preservation failed: missing "https://example.com"',
-    );
   });
 });

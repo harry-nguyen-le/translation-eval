@@ -63,12 +63,8 @@ export function assertUrlPreservation(source: string, target: string): void {
   const result = validateUrlPreservation(source, target);
 
   if (!result.isValid) {
-    throw new Error(formatUrlPreservationIssues(result.issues));
+    throw new Error(result.issues.map(formatIssue).join("\n"));
   }
-}
-
-export function formatUrlPreservationIssues(issues: readonly UrlPreservationIssue[]): string {
-  return issues.map(formatIssue).join("\n");
 }
 
 function trimUrl(url: string): string {

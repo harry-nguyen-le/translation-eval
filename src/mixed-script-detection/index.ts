@@ -68,20 +68,19 @@ export function checkIcuTranslationForMixedScripts(
   targetLocale: string,
   options: MixedScriptCheckOptions = {},
 ): MixedScriptCheckResult {
+  const expectedScripts = [...expectedUnicodeScriptsForLocale(targetLocale)];
   const visibleSegments = extractVisibleSegments(message);
-  const issues = visibleSegments.flatMap((segment) => checkSegment(segment, options));
+  const issues = visibleSegments.flatMap((segment) =>
+    checkSegment(segment, expectedScripts, options),
+  );
 
   return {
     targetLocale,
-    expectedScripts: EXPECTED_SCRIPTS,
+    expectedScripts,
     visibleSegments,
     hasUnexpectedScript: issues.length > 0,
     issues,
   };
-}
-
-export function isNeutralCharacter(char: string): boolean {
-  return NEUTRAL_SCRIPT_PATTERN.test(char);
 }
 
 export function charMatchesScript(char: string, script: string): boolean {
@@ -89,14 +88,18 @@ export function charMatchesScript(char: string, script: string): boolean {
 }
 
 export function detectedScriptForCharacter(char: string): DetectedScript {
-  return isNeutralCharacter(char)
+  return NEUTRAL_SCRIPT_PATTERN.test(char)
     ? "Neutral"
     : charMatchesScript(char, "Latn")
       ? "Latin"
       : "NonLatin";
 }
 
-function checkSegment(segment: VisibleSegment, options: MixedScriptCheckOptions): ScriptIssue[] {
+function checkSegment(
+  segment: VisibleSegment,
+  expectedScripts: string[],
+  options: MixedScriptCheckOptions,
+): ScriptIssue[] {
   const text = segment.text.normalize("NFC");
   const allowedRanges = buildAllowedRanges(text, options);
   const issues: ScriptIssue[] = [];
@@ -114,7 +117,7 @@ function checkSegment(segment: VisibleSegment, options: MixedScriptCheckOptions)
         indexInMessage: segment.start + index,
         segment: text,
         path: segment.path,
-        expectedScripts: EXPECTED_SCRIPTS,
+        expectedScripts,
       });
     }
 
