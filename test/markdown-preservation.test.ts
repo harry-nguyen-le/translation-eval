@@ -6,13 +6,13 @@ import {
   validateMarkdownPreservation,
 } from "../src/markdown-preservation/index";
 
-const hotelDescriptionJson = String.raw`"\n#### Rooms  \nMake yourself at home in one of the 220 guestrooms.\n\n#### Facilities  \nMake use of convenient amenities."`;
+const hotelDescription =
+  "\n#### Rooms  \nMake yourself at home in one of the 220 guestrooms.\n\n#### Facilities  \nMake use of convenient amenities.";
 
 describe("parseMarkdownForValidation", () => {
-  it("parses JSON-string Markdown with escaped newlines", () => {
-    const result = parseMarkdownForValidation(hotelDescriptionJson, { inputFormat: "json-string" });
+  it("parses Markdown strings directly", () => {
+    const result = parseMarkdownForValidation(hotelDescription);
 
-    expect(result.inputFormat).toBe("json-string");
     expect(result.markdown.startsWith("\n#### Rooms")).toBe(true);
     expect(result.ast.children.map((node) => node.type)).toEqual([
       "heading",
@@ -22,10 +22,9 @@ describe("parseMarkdownForValidation", () => {
     ]);
   });
 
-  it("parses runtime Markdown strings directly", () => {
+  it("parses inline Markdown strings", () => {
     const result = parseMarkdownForValidation("Read [the docs](/docs).");
 
-    expect(result.inputFormat).toBe("runtime");
     expect(result.ast.children[0]?.type).toBe("paragraph");
   });
 });
@@ -36,18 +35,6 @@ describe("validateMarkdown", () => {
 
     expect(result.isValid).toBe(true);
     expect(result.issues).toEqual([]);
-  });
-
-  it("returns invalid for JSON-string input that cannot be decoded", () => {
-    const result = validateMarkdown(String.raw`"Line one\z"`, { inputFormat: "json-string" });
-
-    expect(result.isValid).toBe(false);
-    expect(result.issues).toEqual([
-      expect.objectContaining({
-        code: "input_parse_error",
-        side: "input",
-      }),
-    ]);
   });
 });
 

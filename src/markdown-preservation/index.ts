@@ -1,11 +1,8 @@
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Heading, List, Root, RootContent } from "mdast";
 
-export type MarkdownInputFormat = "json-string" | "runtime";
-
 export type MarkdownParseResult = {
   input: string;
-  inputFormat: MarkdownInputFormat;
   markdown: string;
   ast: Root;
 };
@@ -55,26 +52,18 @@ export type MarkdownPreservationResult = {
   target?: MarkdownParseResult;
 };
 
-export function parseMarkdownForValidation(
-  input: string,
-  options: { inputFormat?: MarkdownInputFormat } = {},
-): MarkdownParseResult {
-  const normalized = normalizeMarkdownInput(input, options.inputFormat ?? "runtime");
-  const ast = fromMarkdown(normalized.markdown);
+export function parseMarkdownForValidation(input: string): MarkdownParseResult {
+  const ast = fromMarkdown(input);
 
   return {
     input,
-    inputFormat: normalized.inputFormat,
-    markdown: normalized.markdown,
+    markdown: input,
     ast,
   };
 }
 
-export function validateMarkdown(
-  input: string,
-  options: { inputFormat?: MarkdownInputFormat } = {},
-): MarkdownValidationResult {
-  const parsed = safeParseMarkdown(input, "input", options);
+export function validateMarkdown(input: string): MarkdownValidationResult {
+  const parsed = safeParseMarkdown(input, "input");
 
   if (!parsed.ok) {
     return {
@@ -93,10 +82,9 @@ export function validateMarkdown(
 export function validateMarkdownPreservation(
   sourceInput: string,
   targetInput: string,
-  options: { inputFormat?: MarkdownInputFormat } = {},
 ): MarkdownPreservationResult {
-  const source = safeParseMarkdown(sourceInput, "source", options);
-  const target = safeParseMarkdown(targetInput, "target", options);
+  const source = safeParseMarkdown(sourceInput, "source");
+  const target = safeParseMarkdown(targetInput, "target");
   const issues: MarkdownPreservationIssue[] = [];
 
   if (!source.ok) {
@@ -216,12 +204,11 @@ function sameJson(left: unknown, right: unknown): boolean {
 function safeParseMarkdown(
   input: string,
   side: "source" | "target" | "input",
-  options: { inputFormat?: MarkdownInputFormat },
 ): { ok: true; result: MarkdownParseResult } | { ok: false; issue: MarkdownPreservationIssue } {
   try {
     return {
       ok: true,
-      result: parseMarkdownForValidation(input, options),
+      result: parseMarkdownForValidation(input),
     };
   } catch (error) {
     return {
@@ -233,30 +220,4 @@ function safeParseMarkdown(
       },
     };
   }
-}
-
-function normalizeMarkdownInput(
-  input: string,
-  inputFormat: MarkdownInputFormat,
-): {
-  inputFormat: MarkdownInputFormat;
-  markdown: string;
-} {
-  if (inputFormat === "runtime") {
-    return {
-      inputFormat: "runtime",
-      markdown: input,
-    };
-  }
-
-  const parsed = JSON.parse(input) as unknown;
-
-  if (typeof parsed !== "string") {
-    throw new TypeError("JSON Markdown input must decode to a string");
-  }
-
-  return {
-    inputFormat: "json-string",
-    markdown: parsed,
-  };
 }
