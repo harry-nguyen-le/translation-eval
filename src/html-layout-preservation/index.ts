@@ -16,9 +16,10 @@ const RAW_TAG_PATTERN = /<\/?\s*([A-Za-z][\w:.-]*)(?:\s+(?:"[^"]*"|'[^']*'|[^'"<
 
 const NAMED_REFERENCE_PATTERN = /&([A-Za-z][A-Za-z0-9]+);?/g;
 const NUMERIC_REFERENCE_PATTERN = /&#(?:x[0-9a-fA-F]+|\d+);?/g;
-// Literal special characters are matched here; entity forms like &nbsp; and &#160; are decoded first.
+// Literal special characters are matched here; entity forms are decoded first.
+// U+00A0 and U+202F are allowed because French commonly uses no-break spaces.
 const LITERAL_SPECIAL_CHARACTER_PATTERN =
-  /[\u00a0\u00ad\u2000-\u200f\u2028-\u202f\u205f\u2060-\u206f\u3000\ufeff]/g;
+  /[\u00ad\u2000-\u200f\u2028-\u202e\u205f\u2060-\u206f\u3000\ufeff]/g;
 
 type LayoutElement = {
   tag: string;
@@ -33,7 +34,7 @@ type LayoutElement = {
  * - `layout_structure_changed`:
  *   `validateHtmlLayoutPreservation("<section><p>Intro</p><ul><li>One</li></ul></section>", "<section><p>Intro</p><p>One</p></section>")`
  * - `special_character_added`:
- *   `validateHtmlLayoutPreservation("<p>Hello world</p>", "<p>Bonjour&nbsp;le monde</p>")`
+ *   `validateHtmlLayoutPreservation("<p>Hello world</p>", "<p>Bonjour\u200Ble monde</p>")`
  */
 type HtmlLayoutPreservationIssue =
   | {
@@ -243,10 +244,9 @@ function validateMarkupBalance(input: string): { ok: true } | { ok: false; messa
 
 function isSpecialCodePoint(codePoint: number): boolean {
   return (
-    codePoint === 0x00a0 ||
     codePoint === 0x00ad ||
     (codePoint >= 0x2000 && codePoint <= 0x200f) ||
-    (codePoint >= 0x2028 && codePoint <= 0x202f) ||
+    (codePoint >= 0x2028 && codePoint <= 0x202e) ||
     codePoint === 0x205f ||
     (codePoint >= 0x2060 && codePoint <= 0x206f) ||
     codePoint === 0x3000 ||

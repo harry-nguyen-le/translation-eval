@@ -92,17 +92,26 @@ describe("validateHtmlLayoutPreservation", () => {
     );
   });
 
-  it("rejects newly introduced special spaces and entities", () => {
+  it("allows newly introduced no-break spaces", () => {
     const result = validateHtmlLayoutPreservation(
       "<p>Hello world</p>",
-      "<p>Bonjour&nbsp;le monde &#x202F; C\u200B</p>",
+      "<p>Bonjour&nbsp;le monde &#x202F;</p>",
+    );
+
+    expect(result.isValid).toBe(true);
+  });
+
+  it("rejects newly introduced invisible controls", () => {
+    const result = validateHtmlLayoutPreservation(
+      "<p>Hello world</p>",
+      "<p>Bonjour le monde C\u200B</p>",
     );
 
     expect(result.issues).toContainEqual({
       code: "special_character_added",
       sourceSpecialCharacters: [],
-      targetSpecialCharacters: ["U+00A0", "U+202F", "U+200B"],
-      addedSpecialCharacters: ["U+00A0", "U+202F", "U+200B"],
+      targetSpecialCharacters: ["U+200B"],
+      addedSpecialCharacters: ["U+200B"],
     });
   });
 
