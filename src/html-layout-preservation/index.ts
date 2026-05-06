@@ -1,6 +1,7 @@
 import { parseDocument } from "htmlparser2";
 import { isTag, type ChildNode } from "domhandler";
-import htmlTags, { voidHtmlTags } from "html-tags";
+import { HtmlValidate } from "html-validate";
+import htmlTags from "html-tags";
 import { characterEntities } from "character-entities";
 
 const setOf = (values: string): Set<string> => new Set(values.split(" "));
@@ -10,15 +11,21 @@ const NON_LAYOUT_TAGS = setOf(
   "a abbr area audio b base bdi bdo button canvas caption cite code col colgroup data datalist del dfn em embed head i iframe img input ins kbd label link map mark math meta meter object optgroup option output picture progress q rp rt ruby s samp script select selectedcontent slot small source span strong style sub sup svg table tbody td template textarea tfoot th thead time title tr track u var video wbr",
 );
 const LAYOUT_TAGS: Set<string> = new Set(htmlTags.filter((tag) => !NON_LAYOUT_TAGS.has(tag)));
-const VOID_TAGS: Set<string> = new Set(voidHtmlTags);
-
-const RAW_TAG_PATTERN = /<\/?\s*([A-Za-z][\w:.-]*)(?:\s+(?:"[^"]*"|'[^']*'|[^'"<>])*)?\s*\/?>/g;
 
 const NAMED_REFERENCE_PATTERN = /&([A-Za-z][A-Za-z0-9]+);?/g;
 const NUMERIC_REFERENCE_PATTERN = /&#(?:x[0-9a-fA-F]+|\d+);?/g;
 // Literal special characters are matched here; entity forms like &nbsp; and &#160; are decoded first.
 const LITERAL_SPECIAL_CHARACTER_PATTERN =
   /[\u00a0\u00ad\u2000-\u200f\u2028-\u202f\u205f\u2060-\u206f\u3000\ufeff]/g;
+
+const htmlValidator = new HtmlValidate({
+  root: true,
+  extends: [],
+  rules: {
+    "close-order": "error",
+    "no-implicit-close": "error",
+  },
+});
 
 type LayoutElement = {
   tag: string;
@@ -193,51 +200,19 @@ function collectLayout(nodes: readonly ChildNode[], layout: LayoutElement[] = []
 }
 
 function validateMarkupBalance(input: string): { ok: true } | { ok: false; message: string } {
-  const stack: string[] = [];
-  let match: RegExpExecArray | null;
+  const report = htmlValidator.validateStringSync(input);
 
-  RAW_TAG_PATTERN.lastIndex = 0;
-
-  while ((match = RAW_TAG_PATTERN.exec(input)) !== null) {
-    const rawTag = match[0];
-    const tag = (match[1] ?? "").toLowerCase();
-
-    if (rawTag.startsWith("</")) {
-      const openTag = stack.pop();
-
-      if (openTag !== tag) {
-        return {
-          ok: false,
-          message: openTag
-            ? `Expected closing tag </${openTag}> before </${tag}>`
-            : `Unexpected closing tag </${tag}>`,
-        };
-      }
-
-      continue;
-    }
-
-    if (
-      /\/\s*>$/.test(rawTag) ||
-      (VOID_TAGS.has(tag) &&
-        !new RegExp(`</\\s*${tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*>`, "i").test(
-          input.slice(RAW_TAG_PATTERN.lastIndex),
-        ))
-    ) {
-      continue;
-    }
-
-    stack.push(tag);
+  if (report.valid) {
+    return { ok: true };
   }
 
-  if (stack.length > 0) {
-    return {
-      ok: false,
-      message: `Missing closing tag </${stack.at(-1)}>`,
-    };
-  }
-
-  return { ok: true };
+  return {
+    ok: false,
+    message: report.results
+      .flatMap((result) => result.messages)
+      .map((message) => message.message)
+      .join("; "),
+  };
 }
 
 function isSpecialCodePoint(codePoint: number): boolean {
