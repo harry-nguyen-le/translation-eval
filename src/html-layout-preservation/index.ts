@@ -5,8 +5,9 @@ import { characterEntities } from "character-entities";
 
 const setOf = (values: string): Set<string> => new Set(values.split(" "));
 
+// html-tags doesn't have a list for non-layout tags
 const NON_LAYOUT_TAGS = setOf(
-  "a abbr area audio b base bdi bdo button canvas cite code data datalist del dfn em embed head i iframe img input ins kbd label link map mark math meta meter object optgroup option output picture progress q rp rt ruby s samp script select selectedcontent slot small source span strong style sub sup svg template textarea time title track u var video wbr",
+  "a abbr area audio b base bdi bdo button canvas caption cite code col colgroup data datalist del dfn em embed head i iframe img input ins kbd label link map mark math meta meter object optgroup option output picture progress q rp rt ruby s samp script select selectedcontent slot small source span strong style sub sup svg table tbody td template textarea tfoot th thead time title tr track u var video wbr",
 );
 const LAYOUT_TAGS: Set<string> = new Set(htmlTags.filter((tag) => !NON_LAYOUT_TAGS.has(tag)));
 const VOID_TAGS: Set<string> = new Set(voidHtmlTags);
@@ -24,6 +25,16 @@ type LayoutElement = {
   children: LayoutElement[];
 };
 
+/**
+ * Issue examples:
+ *
+ * - `markup_parse_error`:
+ *   `validateHtmlLayoutPreservation("<p>Hello <strong>world</strong></p>", "<p>Bonjour <strong>monde</p>")`
+ * - `layout_structure_changed`:
+ *   `validateHtmlLayoutPreservation("<section><p>Intro</p><ul><li>One</li></ul></section>", "<section><p>Intro</p><p>One</p></section>")`
+ * - `special_character_added`:
+ *   `validateHtmlLayoutPreservation("<p>Hello world</p>", "<p>Bonjour&nbsp;le monde</p>")`
+ */
 type HtmlLayoutPreservationIssue =
   | {
       code: "markup_parse_error";

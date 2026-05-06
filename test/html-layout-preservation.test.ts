@@ -40,6 +40,17 @@ describe("validateHtmlLayoutPreservation", () => {
     expect(result.isValid).toBe(true);
   });
 
+  it("ignores table hierarchy", () => {
+    const result = validateHtmlLayoutPreservation(
+      "<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Ada</td></tr></tbody></table>",
+      "<table><tbody><tr><td>Nom Ada</td></tr></tbody></table>",
+    );
+
+    expect(result.sourceLayout).toEqual([]);
+    expect(result.targetLayout).toEqual(result.sourceLayout);
+    expect(result.isValid).toBe(true);
+  });
+
   it("allows stylistic inline formatting to disappear when layout is preserved", () => {
     const result = validateHtmlLayoutPreservation(
       "<p>Room A <strong>and</strong> Room B</p>",
