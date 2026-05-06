@@ -25,6 +25,15 @@ describe("extractUrls", () => {
     expect(extractUrls("See (https://example.com/help).")).toEqual(["https://example.com/help"]);
     expect(extractUrls("See [https://example.com/help].")).toEqual(["https://example.com/help"]);
   });
+
+  it("stops before raw bracket and brace characters", () => {
+    expect(extractUrls("See https://example.com/search?q=[spa].")).toEqual([
+      "https://example.com/search?q=",
+    ]);
+    expect(extractUrls("See https://example.com/search?q={spa}.")).toEqual([
+      "https://example.com/search?q=",
+    ]);
+  });
 });
 
 describe("validateUrlPreservation", () => {

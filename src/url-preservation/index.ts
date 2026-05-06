@@ -1,10 +1,5 @@
-const URL_PATTERN = /\b(?:(?:https?|ftp):\/\/|mailto:|tel:|www\.)[^\s<>"'`]+/gi;
-const TRAILING_PUNCTUATION_PATTERN = /[.,;:!?]+$/;
-const WRAPPING_DELIMITER_PAIRS = [
-  ["(", ")"],
-  ["[", "]"],
-  ["{", "}"],
-] as const;
+const URL_PATTERN =
+  /\b(?:(?:https?|ftp):\/\/|mailto:|tel:|www\.)(?:[^\s<>"'`[\]{}\\^~().,;:!?]|\([^\s<>"'`[\]{}\\^~()]*\)|[.,;:!?](?=[^\s<>"'`[\]{}\\^~().,;:!?]))+/gi;
 
 export type UrlPreservationIssue =
   | {
@@ -28,7 +23,7 @@ export type UrlPreservationResult = {
 };
 
 export function extractUrls(content: string): string[] {
-  return Array.from(content.matchAll(URL_PATTERN), (match) => trimUrl(match[0])).filter(Boolean);
+  return Array.from(content.matchAll(URL_PATTERN), (match) => match[0]);
 }
 
 export function validateUrlPreservation(source: string, target: string): UrlPreservationResult {
@@ -72,19 +67,6 @@ export function assertUrlPreservation(source: string, target: string): void {
   }
 }
 
-function trimUrl(url: string): string {
-  let trimmed = url.replace(TRAILING_PUNCTUATION_PATTERN, "");
-
-  // URL_PATTERN can capture surrounding prose delimiters; keep balanced delimiters inside the URL.
-  for (const [open, close] of WRAPPING_DELIMITER_PAIRS) {
-    while (trimmed.endsWith(close) && count(trimmed, open) < count(trimmed, close)) {
-      trimmed = trimmed.slice(0, -1);
-    }
-  }
-
-  return trimmed;
-}
-
 function difference(source: readonly string[], target: readonly string[]): string[] {
   const remaining = new Map<string, number>();
 
@@ -106,10 +88,6 @@ function difference(source: readonly string[], target: readonly string[]): strin
   }
 
   return missing;
-}
-
-function count(value: string, character: string): number {
-  return value.split(character).length - 1;
 }
 
 function formatIssue(issue: UrlPreservationIssue): string {
