@@ -1,0 +1,968 @@
+$ bun run scripts/html-layout-preservation.ts translation-data/cp-static-translations.json
+HTML layout preservation
+File: translation-data/cp-static-translations.json
+Entries: 21185
+Checked translations: 40651
+Skipped translations: 1719
+Invalid entries: 292
+
+First 50 invalid entries:
+{
+  "id": "-Mrui-GeczJ2L48CbIht",
+  "field": "french",
+  "description": "Label for insurance type filter chips in car hire search",
+  "source": "Included insurance:",
+  "target": "Assurance incluse :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "-RIei9uD_9SJt6WI7CcW",
+  "field": "french",
+  "description": "Free preview benefits description when invite has no specific expiry date",
+  "source": "Discover hidden offers, view member pricing and find out what life is like in our VIP Travel Club. <bold>No credit card required!</bold> This exclusive invite is valid for a limited period only, so be sure to accept this offer before time runs out.",
+  "target": "Découvrez des offres exclusives, consultez les tarifs membres et découvrez ce qu'est la vie dans notre VIP Travel Club. <bold>Aucune carte bancaire requise&nbsp;!</bold> Cette invitation exclusive est valable pour une durée limitée seulement, alors assurez-vous d’accepter cette offre avant qu’il ne soit trop tard.",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "-Syeg_SAQo9ebUlmDO3E",
+  "field": "french",
+  "description": "Subheading for waitlist signup on the login or signup page",
+  "source": "Still interested?",
+  "target": "Toujours intéressé(e) ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "-ZbVn8lOpu65SBwttIJw",
+  "field": "french",
+  "description": "Modal title for the map search input on mobile in the trip planner",
+  "source": "What are you looking for?",
+  "target": "Que recherchez-vous ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "-aNQz_lv1RvdK1NUA5nU",
+  "field": "french",
+  "description": "Car hire confirmation ID label with voucher ID in the car hire section",
+  "source": "Confirmation ID: {voucherId}",
+  "target": "ID de confirmation : {voucherId}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "-hstge9xwH0mXwOla1Xm",
+  "field": "french",
+  "description": "Leg number label in flight detail baggage section in the flights section",
+  "source": "Leg {legNumber}:",
+  "target": "Segment {legNumber} :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "-iMMCVN0aC5Ds5vZE85O",
+  "field": "french",
+  "description": "Prompt text linking to broader Maldives search in the flights section",
+  "source": "Looking for other dates?",
+  "target": "Vous cherchez d'autres dates ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "0Wfo7-I95T359rNrqFmK",
+  "field": "french",
+  "description": "Promotion code applied label in the payment summary",
+  "source": "Promotion ‘{promoCode}’",
+  "target": "Promotion « {promoCode} »",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0",
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0",
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "0ZTe9uCz1-f3Ryc4PGjD",
+  "field": "french",
+  "description": "Label for cabin number in cruise cabin T&Cs in the cruise section",
+  "source": "Cabin number:",
+  "target": "Numéro de cabine :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "0b-Wid5FhminQdg3Xfzl",
+  "field": "french",
+  "description": "Error message when experience search tile list fails to load",
+  "source": "Something went wrong!",
+  "target": "Un problème est survenu !",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "0qjMmi4xs9_1Xl6O5sBk",
+  "field": "french",
+  "description": "Driver name label and value in car hire booking in the car hire section",
+  "source": "<bold>Name:</bold> {fullName}",
+  "target": "<bold>Nom :</bold> {fullName}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "0w2ws2wLl0JgZ7bar3Fx",
+  "field": "french",
+  "description": "Confirmation message after sending friends and family verification code",
+  "source": "We’ve sent a code to your friend or family member’s work email address:",
+  "target": "Nous avons envoyé un code à l’adresse e-mail professionnelle de votre ami ou membre de votre famille :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "14wSqocPGHQvw1I4BJ4g",
+  "field": "french",
+  "description": "Title for the confirm delete stop modal in trip planner",
+  "source": "Delete stop?",
+  "target": "Supprimer l'étape ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "1JTrt-kkaxrVsxzySGAt",
+  "field": "french",
+  "description": "Gold tier benefit - two airport lounge passes (lounge pass region)",
+  "source": "2x Airport lounge passes",
+  "target": "2 pass pour salon d'aéroport",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "1XP74WE0DjLxjx32Y_QZ",
+  "field": "french",
+  "description": "Label prefix for the included travellers and bags in loyalty transfer details",
+  "source": "Included:",
+  "target": "Inclus :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "1YaA8b_S05y7DSDeNfFG",
+  "field": "french",
+  "description": "Heading for pending airline booking reference banner",
+  "source": "Airline booking reference: Pending",
+  "target": "Référence de réservation aérienne : en attente",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "1g141hZimjNYeOQTaeww",
+  "field": "french",
+  "description": "Payment schedule option label for reserve for zero",
+  "source": "Reserve for $0",
+  "target": "Réservez pour 0 $",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "1yHxQ4S1uadVLOEAig3W",
+  "field": "french",
+  "description": "Warning about group seating with bold prefix when seats are not selected",
+  "source": "<bold>Please note:</bold> your group may be seated separately.",
+  "target": "<bold>Veuillez noter&nbsp;:</bold> votre groupe pourra être placé séparément.",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "2lj6d6EJBvaqWLuAdcOv",
+  "field": "french",
+  "description": "Bed size label in cabin category tile in the cruise cabin selection area",
+  "source": "Beds: <b>{bedSize}</b>",
+  "target": "Lits&nbsp;: <b>{bedSize}</b>",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "3HkA7wSSbpsf9cmwXspQ",
+  "field": "french",
+  "description": "Label displaying the scheduled date of the next payment charge retry attempt",
+  "source": "Next Attempt: {date}",
+  "target": "Nouvelle tentative : {date}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "3VyoH6pBhjkEu8vE1q6y",
+  "field": "french",
+  "description": "Draw date display in prize modal for raffle competitions",
+  "source": "Draw Date: {drawDate}",
+  "target": "Date du tirage : {drawDate}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "3XdGzLLJDrotxBixWr-X",
+  "field": "french",
+  "description": "Exclusion intro for South Pacific destination restrictions",
+  "source": "Flights to or within the following South Pacific destinations:",
+  "target": "Vols vers ou à l'intérieur des destinations suivantes du Pacifique Sud :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "3Yx1FEC95RK0Vbi65ZPw",
+  "field": "french",
+  "description": "Heading prompting user to download the app for additional savings",
+  "source": "Download the app and save even <i>more!</i>",
+  "target": "Téléchargez l'application et économisez encore <i>plus&nbsp;!</i>",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "3lWvyvX3xQKQsmjilGsD",
+  "field": "french",
+  "description": "Label for booking confirmation time in the booking or order summary view",
+  "source": "Time:",
+  "target": "Heure :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "3qvxegpN2IWpW8aFkLhg",
+  "field": "french",
+  "description": "Question shown when single flight found in chat custom flight lookup",
+  "source": "Is this your flight?",
+  "target": "Est-ce votre vol&nbsp;?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "4BIdW4q43fsSZXkgASP2",
+  "field": "french",
+  "description": "Fun fact headline shown while AI trip generation is in progress for Sydney (fact 1)",
+  "source": "The Sydney Opera House uses 1,056,006 roof tiles",
+  "target": "Le Sydney Opera House utilise 1 056 006 tuiles de toit",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+202F",
+        "U+202F"
+      ],
+      "addedSpecialCharacters": [
+        "U+202F",
+        "U+202F"
+      ]
+    }
+  ]
+}
+{
+  "id": "4CNnP7sqlqYMQFLjA7xG",
+  "field": "french",
+  "description": "Car hire driver age category for ages 70 and above",
+  "source": "70+",
+  "target": "70 ans et plus",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "4LhcJCRToMipDnYhGu0_",
+  "field": "french",
+  "description": "Bold label for inclusions benefit in account access prompt",
+  "source": "More inclusions:",
+  "target": "Plus d’inclusions :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "4S78p77ZqRA-qVyvWYL1",
+  "field": "french",
+  "description": "Form field label for experience duration in the booking modal",
+  "source": "Duration:",
+  "target": "Durée :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "4Z28PhruhsoRynk_1pDQ",
+  "field": "french",
+  "description": "Quick action pill when an order is present on the chat landing page",
+  "source": "What should I add to this stay?",
+  "target": "Que devrais-je ajouter à ce séjour ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "4qFdUSk0ut7WMGkK8Isu",
+  "field": "french",
+  "description": "Silver tier benefit: number of free airport lounge passes",
+  "source": "2x free airport lounge passes",
+  "target": "2 pass pour salon d'aéroport gratuits",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "50SD8E_JqLx5mfUj0X7C",
+  "field": "french",
+  "description": "Label showing when attachment was created in the order details view",
+  "source": "<b>Created at:</b> {date}",
+  "target": "<b>Créé le :</b> {date}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "58dttzGDhqD_NzmBrIbV",
+  "field": "french",
+  "description": "Silver tier spend threshold for Singapore region in Lunar New Year campaign",
+  "source": "S$1,000",
+  "target": "1 000 $ SG",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+202F",
+        "U+00A0",
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+202F",
+        "U+00A0",
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "5BKGG1RR2h0A9GZBUSo3",
+  "field": "french",
+  "description": "Info text about pending items timing in the booking or order summary view",
+  "source": "Pending: Will be added after your booking is completed",
+  "target": "En attente : sera ajouté une fois votre réservation finalisée",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "5QuuR5I3GyXhoTCUU9D3",
+  "field": "french",
+  "description": "Heading for upsell section on booking confirmation page",
+  "source": "What’s next to plan?",
+  "target": "Quelle est la prochaine étape à planifier ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "5lWy8y2toPX81ULepOWJ",
+  "field": "french",
+  "description": "FAQ question about what to do in a rental car accident",
+  "source": "What should I do if I get into an accident in a rental car?",
+  "target": "Que dois-je faire si j’ai un accident dans une voiture de location ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "5lzR2Pf6mhkxocoxvQMW",
+  "field": "french",
+  "description": "Label for date selection field in the date selection or calendar picker",
+  "source": "When?",
+  "target": "Quand ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "5oKDxcm_FXbz8Ow50lOR",
+  "field": "french",
+  "description": "Heading for Maldives charter call prompt card component",
+  "source": "Have questions?",
+  "target": "Vous avez des questions&nbsp;?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "5v59tyit70oTjJb7c1m8",
+  "field": "french",
+  "description": "Label for the sender name field on the gift card personalisation form",
+  "source": "From:",
+  "target": "De :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "6MIWZ3YpDBdJ-3quROGd",
+  "field": "french",
+  "description": "Traveller name label and value in tour traveller summary",
+  "source": "<bold>Name:</bold> {fullName}",
+  "target": "<bold>Nom :</bold> {fullName}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "6RLRkMP2ubIdRd6Zfqms",
+  "field": "french",
+  "description": "Form details label followed by content value in the form kit section",
+  "source": "{label}: {content}",
+  "target": "{label} : {content}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "6X9JHdz2OXcjnZTVzoFB",
+  "field": "french",
+  "description": "Label showing the current dismissal status of the homepage trip module",
+  "source": "Homepage module status: {status}",
+  "target": "Statut du module d’accueil : {status}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "78w6BMDv0ZfsLJEyRQPI",
+  "field": "french",
+  "description": "Success snackbar heading when trip is ready in the trip planner",
+  "source": "Your trip is ready!",
+  "target": "Votre voyage est prêt&nbsp;!",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "7C-RURlvixFptEdghRXQ",
+  "field": "french",
+  "description": "Label for the new start date when self-serve changing tour dates",
+  "source": "New start date:",
+  "target": "Nouvelle date de départ :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "7CXZ0RUwBzdxXHfpS6sj",
+  "field": "french",
+  "description": "Label for the sort chip showing current sort option on contributions list",
+  "source": "Sort: {sortLabel}",
+  "target": "Trier : {sortLabel}",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "7O1P7JjR879jLtU1tIZh",
+  "field": "french",
+  "description": "Title for the leave trip confirmation modal in the trip planner",
+  "source": "Leave this trip?",
+  "target": "Quitter ce voyage ?",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "8-SUD1oNGneIkEFxEHuU",
+  "field": "french",
+  "description": "Taxes and fees subheading within fine print section on property page",
+  "source": "Taxes & fees:",
+  "target": "Taxes et frais :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "8AdN2gunLDYPDp3AXrME",
+  "field": "french",
+  "description": "Bed size label in cabin category details modal in the checkout cruise selection",
+  "source": "Beds: <b>{bedSize}</b>",
+  "target": "Lits : <b>{bedSize}</b>",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+{
+  "id": "8EwYTwjYIJNnxiXo8VgR",
+  "field": "french",
+  "description": "Fun fact headline shown while AI trip generation is in progress for London (fact 6)",
+  "source": "Tower Bridge once raised its bascules over 6,000 times a year",
+  "target": "Le Tower Bridge levait autrefois ses bascules plus de 6 000 fois par an",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+202F"
+      ],
+      "addedSpecialCharacters": [
+        "U+202F"
+      ]
+    }
+  ]
+}
+{
+  "id": "8H7ySSEp3OwGf5Jd4RWc",
+  "field": "french",
+  "description": "Section heading for unlimited yearly benefits in LuxPlus+ benefits modal",
+  "source": "You’ll also enjoy these unlimited benefits all year round:",
+  "target": "Vous profiterez également de ces avantages illimités toute l’année :",
+  "issues": [
+    {
+      "code": "special_character_added",
+      "sourceSpecialCharacters": [],
+      "targetSpecialCharacters": [
+        "U+00A0"
+      ],
+      "addedSpecialCharacters": [
+        "U+00A0"
+      ]
+    }
+  ]
+}
+error: script "i18n:html-layout-preservation" exited with code 1
