@@ -1,6 +1,5 @@
 import { parseDocument } from "htmlparser2";
 import { isTag, type ChildNode } from "domhandler";
-import { characterEntities } from "character-entities";
 
 const setOf = (values: string): Set<string> => new Set(values.split(" "));
 
@@ -10,13 +9,6 @@ const LAYOUT_TAGS = setOf(
 const VOID_TAGS = setOf("area base br col embed hr img input link meta source track wbr");
 
 const RAW_TAG_PATTERN = /<\/?\s*([A-Za-z][\w:.-]*)(?:\s+(?:"[^"]*"|'[^']*'|[^'"<>])*)?\s*\/?>/g;
-
-const NAMED_REFERENCE_PATTERN = /&([A-Za-z][A-Za-z0-9]+);?/g;
-const NUMERIC_REFERENCE_PATTERN = /&#(?:x[0-9a-fA-F]+|\d+);?/g;
-// Literal special characters are matched here; entity forms are decoded first.
-// U+00A0 and U+202F are allowed because French commonly uses no-break spaces.
-const LITERAL_SPECIAL_CHARACTER_PATTERN =
-  /[\u00ad\u2000-\u200f\u2028-\u202e\u205f\u2060-\u206f\u3000\ufeff]/g;
 
 type LayoutElement = {
   tag: string;
@@ -30,8 +22,6 @@ type LayoutElement = {
  *   `validateHtmlLayoutPreservation("<p>Hello <strong>world</strong></p>", "<p>Bonjour <strong>monde</p>")`
  * - `layout_structure_changed`:
  *   `validateHtmlLayoutPreservation("<section><p>Intro</p><ul><li>One</li></ul></section>", "<section><p>Intro</p><p>One</p></section>")`
- * - `special_character_added`:
- *   `validateHtmlLayoutPreservation("<p>Hello world</p>", "<p>Bonjour\u200Ble monde</p>")`
  */
 type HtmlLayoutPreservationIssue =
   | {
@@ -43,12 +33,6 @@ type HtmlLayoutPreservationIssue =
       code: "layout_structure_changed";
       sourceLayout: LayoutElement[];
       targetLayout: LayoutElement[];
-    }
-  | {
-      code: "special_character_added";
-      sourceSpecialCharacters: string[];
-      targetSpecialCharacters: string[];
-      addedSpecialCharacters: string[];
     };
 
 type HtmlLayoutPreservationResult = {
@@ -65,33 +49,12 @@ export function validateHtmlLayoutPreservation(
   const sourceAnalysis = {
     balance: validateMarkupBalance(source),
     layout: collectLayout(parseDocument(source, parserOptions).children),
-    specialCharacters: collectSpecialCharacters(source),
   };
   const targetAnalysis = {
     balance: validateMarkupBalance(target),
     layout: collectLayout(parseDocument(target, parserOptions).children),
-    specialCharacters: collectSpecialCharacters(target),
   };
-  const remainingSourceSpecialCharacters = new Map<string, number>();
   const issues: HtmlLayoutPreservationIssue[] = [];
-
-  for (const value of sourceAnalysis.specialCharacters) {
-    remainingSourceSpecialCharacters.set(
-      value,
-      (remainingSourceSpecialCharacters.get(value) ?? 0) + 1,
-    );
-  }
-
-  const addedSpecialCharacters = targetAnalysis.specialCharacters.filter((value) => {
-    const count = remainingSourceSpecialCharacters.get(value) ?? 0;
-
-    if (count === 0) {
-      return true;
-    }
-
-    remainingSourceSpecialCharacters.set(value, count - 1);
-    return false;
-  });
 
   if (!sourceAnalysis.balance.ok) {
     issues.push({
@@ -117,48 +80,12 @@ export function validateHtmlLayoutPreservation(
     });
   }
 
-  if (addedSpecialCharacters.length > 0) {
-    issues.push({
-      code: "special_character_added",
-      sourceSpecialCharacters: sourceAnalysis.specialCharacters,
-      targetSpecialCharacters: targetAnalysis.specialCharacters,
-      addedSpecialCharacters,
-    });
-  }
-
   return {
     isValid: issues.length === 0,
     sourceLayout: sourceAnalysis.layout,
     targetLayout: targetAnalysis.layout,
     issues,
   };
-}
-
-function collectSpecialCharacters(input: string): string[] {
-  const named = Array.from(input.matchAll(NAMED_REFERENCE_PATTERN), ([, name = ""]) => {
-    const value = characterEntities[name] ?? characterEntities[name.toLowerCase()];
-
-    return value
-      ? Array.from(value).flatMap((char) => {
-          const codePoint = char.codePointAt(0) ?? 0;
-          return isSpecialCodePoint(codePoint) ? [formatCodePoint(codePoint)] : [];
-        })
-      : [];
-  }).flat();
-  const numeric = Array.from(input.matchAll(NUMERIC_REFERENCE_PATTERN), ([reference]) => {
-    const body = reference.replace(/^&#/, "").replace(/;$/, "");
-    const radix = body.toLowerCase().startsWith("x") ? 16 : 10;
-    const codePoint = Number.parseInt(radix === 16 ? body.slice(1) : body, radix);
-
-    return Number.isFinite(codePoint) && isSpecialCodePoint(codePoint)
-      ? formatCodePoint(codePoint)
-      : undefined;
-  }).filter((value): value is string => value !== undefined);
-  const literal = Array.from(input.matchAll(LITERAL_SPECIAL_CHARACTER_PATTERN), (match) =>
-    formatCodePoint(match[0].codePointAt(0) ?? 0),
-  );
-
-  return [...named, ...numeric, ...literal];
 }
 
 const parserOptions = {
@@ -237,20 +164,4 @@ function validateMarkupBalance(input: string): { ok: true } | { ok: false; messa
   }
 
   return { ok: true };
-}
-
-function isSpecialCodePoint(codePoint: number): boolean {
-  return (
-    codePoint === 0x00ad ||
-    (codePoint >= 0x2000 && codePoint <= 0x200f) ||
-    (codePoint >= 0x2028 && codePoint <= 0x202e) ||
-    codePoint === 0x205f ||
-    (codePoint >= 0x2060 && codePoint <= 0x206f) ||
-    codePoint === 0x3000 ||
-    codePoint === 0xfeff
-  );
-}
-
-function formatCodePoint(codePoint: number): string {
-  return `U+${codePoint.toString(16).toUpperCase().padStart(4, "0")}`;
 }

@@ -122,36 +122,14 @@ describe("validateHtmlLayoutPreservation", () => {
     );
   });
 
-  it("allows newly introduced no-break spaces", () => {
+  it("does not validate special characters as part of layout preservation", () => {
     const result = validateHtmlLayoutPreservation(
       "<p>Hello world</p>",
-      "<p>Bonjour&nbsp;le monde &#x202F;</p>",
+      "<p>Bonjour le monde\u200B</p>",
     );
 
     expect(result.isValid).toBe(true);
-  });
-
-  it("rejects newly introduced invisible controls", () => {
-    const result = validateHtmlLayoutPreservation(
-      "<p>Hello world</p>",
-      "<p>Bonjour le monde C\u200B</p>",
-    );
-
-    expect(result.issues).toContainEqual({
-      code: "special_character_added",
-      sourceSpecialCharacters: [],
-      targetSpecialCharacters: ["U+200B"],
-      addedSpecialCharacters: ["U+200B"],
-    });
-  });
-
-  it("allows existing special spaces when target does not add more", () => {
-    const result = validateHtmlLayoutPreservation(
-      "<p>Total:&nbsp;100</p>",
-      "<p>Total :&#160;100</p>",
-    );
-
-    expect(result.isValid).toBe(true);
+    expect(result.issues).toEqual([]);
   });
 
   it("rejects unbalanced markup in the target", () => {

@@ -6,11 +6,11 @@ The check is intentionally less strict than full tag preservation:
 
 - block/layout tags must preserve their tag names and nesting
 - inline tags such as `a`, `strong`, `em`, `span`, and `b` may move, change, or disappear
-- French no-break spaces such as `&nbsp;`, `&#160;`, `U+00A0`, and `U+202F` are allowed
-- newly introduced invisible characters, such as zero-width characters and bidi controls, are rejected
 - malformed raw tags are rejected
 
 This avoids false failures when a formatted English word has no direct translated equivalent, while still catching layout-breaking output.
+
+Special character detection, such as zero-width characters or bidi controls, is intentionally not part of this check and should live in a separate validator.
 
 ## API
 
