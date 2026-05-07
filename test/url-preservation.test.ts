@@ -10,9 +10,22 @@ describe("extractUrls", () => {
   it("extracts common URL forms and trims sentence punctuation", () => {
     expect(
       extractUrls(
-        "Open https://example.com/deals?a=1, email mailto:support@example.com, or visit www.example.com.",
+        "Open https://example.com/deals?a=1, email mailto:support@example.com, visit google.com, or visit www.example.com.",
       ),
-    ).toEqual(["https://example.com/deals?a=1", "mailto:support@example.com", "www.example.com"]);
+    ).toEqual([
+      "https://example.com/deals?a=1",
+      "mailto:support@example.com",
+      "google.com",
+      "www.example.com",
+    ]);
+  });
+
+  it("extracts bare domains with paths", () => {
+    expect(extractUrls("Visit example.com/help before booking.")).toEqual(["example.com/help"]);
+  });
+
+  it("does not extract bare domains from raw email addresses", () => {
+    expect(extractUrls("Email support@example.com for help.")).toEqual([]);
   });
 
   it("keeps balanced closing delimiters inside URLs", () => {
@@ -67,6 +80,26 @@ describe("validateUrlPreservation", () => {
       expect.objectContaining({
         code: "urls_added",
         extraUrls: ["https://example.fr/politiques"],
+      }),
+    );
+  });
+
+  it("rejects changed bare domain URLs", () => {
+    const result = validateUrlPreservation(
+      "Read more at google.com before booking.",
+      "Consultez google.fr avant de réserver.",
+    );
+
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "urls_missing",
+        missingUrls: ["google.com"],
+      }),
+    );
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: "urls_added",
+        extraUrls: ["google.fr"],
       }),
     );
   });
