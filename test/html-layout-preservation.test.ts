@@ -40,6 +40,36 @@ describe("validateHtmlLayoutPreservation", () => {
     expect(result.isValid).toBe(true);
   });
 
+  it("tracks hardcoded block layout tags", () => {
+    const result = validateHtmlLayoutPreservation(
+      "<main><article><h2>Title</h2><p>Body</p></article></main>",
+      "<main><article><h2>Titre</h2><p>Corps</p></article></main>",
+    );
+
+    expect(result.sourceLayout).toEqual([
+      {
+        tag: "main",
+        children: [
+          {
+            tag: "article",
+            children: [
+              {
+                tag: "h2",
+                children: [],
+              },
+              {
+                tag: "p",
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(result.targetLayout).toEqual(result.sourceLayout);
+    expect(result.isValid).toBe(true);
+  });
+
   it("ignores table hierarchy", () => {
     const result = validateHtmlLayoutPreservation(
       "<table><thead><tr><th>Name</th></tr></thead><tbody><tr><td>Ada</td></tr></tbody></table>",

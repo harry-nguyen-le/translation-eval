@@ -1,16 +1,13 @@
 import { parseDocument } from "htmlparser2";
 import { isTag, type ChildNode } from "domhandler";
-import htmlTags, { voidHtmlTags } from "html-tags";
 import { characterEntities } from "character-entities";
 
 const setOf = (values: string): Set<string> => new Set(values.split(" "));
 
-// html-tags doesn't have a list for non-layout tags
-const NON_LAYOUT_TAGS = setOf(
-  "a abbr area audio b base bdi bdo button canvas caption cite code col colgroup data datalist del dfn em embed head i iframe img input ins kbd label link map mark math meta meter object optgroup option output picture progress q rp rt ruby s samp script select selectedcontent slot small source span strong style sub sup svg table tbody td template textarea tfoot th thead time title tr track u var video wbr",
+const LAYOUT_TAGS = setOf(
+  "article aside blockquote body br dd details dialog div dl dt fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup hr html li main menu nav ol p pre section summary ul",
 );
-const LAYOUT_TAGS: Set<string> = new Set(htmlTags.filter((tag) => !NON_LAYOUT_TAGS.has(tag)));
-const VOID_TAGS: Set<string> = new Set(voidHtmlTags);
+const VOID_TAGS = setOf("area base br col embed hr img input link meta source track wbr");
 
 const RAW_TAG_PATTERN = /<\/?\s*([A-Za-z][\w:.-]*)(?:\s+(?:"[^"]*"|'[^']*'|[^'"<>])*)?\s*\/?>/g;
 

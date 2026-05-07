@@ -28,7 +28,6 @@
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.5",
     "character-entities": "^2.0.2",
-    "html-tags": "^5.1.0",
     "htmlparser2": "^12.0.0",
     "mdast-util-from-markdown": "^2.0.3"
   },
