@@ -1,5 +1,15 @@
-const URL_PATTERN =
-  /(?<![@\p{L}\p{N}_-])(?:(?:(?:https?|ftp):\/\/|mailto:|tel:|www\.)(?:[^\s<>"'`[\]{}\\^~().,;:!?]|\([^\s<>"'`[\]{}\\^~()]*\)|[.,;:!?](?=[^\s<>"'`[\]{}\\^~().,;:!?]))+|(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+[\p{L}]{2,}(?::\d{2,5})?(?:[/?#](?:[^\s<>"'`[\]{}\\^~().,;:!?]|\([^\s<>"'`[\]{}\\^~()]*\)|[.,;:!?](?=[^\s<>"'`[\]{}\\^~().,;:!?]))*)?)/giu;
+const URL_BODY_CHARACTER =
+  "(?:[^\\s<>\"'`\\[\\]{}\\\\^~().,;:!?]|\\([^\\s<>\"'`\\[\\]{}\\\\^~()]*\\)|[.,;:!?](?=[^\\s<>\"'`\\[\\]{}\\\\^~().,;:!?]))";
+const URL_BODY = String.raw`${URL_BODY_CHARACTER}+`;
+const OPTIONAL_URL_PATH = String.raw`(?:[/?#]${URL_BODY_CHARACTER}*)?`;
+const DOMAIN_LABEL = String.raw`[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?`;
+const TOP_LEVEL_DOMAIN = String.raw`(?:[\p{L}]{2,}|xn--[\p{L}\p{N}-]+)`;
+const BARE_DOMAIN = String.raw`(?:${DOMAIN_LABEL}\.)+${TOP_LEVEL_DOMAIN}(?::\d{2,5})?${OPTIONAL_URL_PATH}`;
+const PREFIXED_URL = String.raw`(?:(?:https?|ftp):\/\/|mailto:|tel:|www\.)${URL_BODY}`;
+const URL_PATTERN = new RegExp(
+  String.raw`(?<![@\p{L}\p{N}_-])(?:${PREFIXED_URL}|${BARE_DOMAIN})`,
+  "giu",
+);
 
 export type UrlPreservationIssue =
   | {
